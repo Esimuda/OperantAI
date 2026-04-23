@@ -1,0 +1,224 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { BusinessProfile, IntegrationConfig } from "@/lib/types";
+import { clearProfile } from "@/lib/db/businessProfile";
+
+const FIELDS: Array<{
+  key: keyof IntegrationConfig;
+  label: string;
+  placeholder: string;
+  secret?: boolean;
+  group: string;
+}> = [
+  { key: "notionApiKey", label: "Notion API Key", placeholder: "ntn_...", secret: true, group: "Notion" },
+  { key: "notionDatabaseId", label: "Notion Database ID", placeholder: "32-char hex ID", group: "Notion" },
+  { key: "resendApiKey", label: "Resend API Key", placeholder: "re_...", secret: true, group: "Email" },
+  { key: "slackWebhookUrl", label: "Slack Webhook URL", placeholder: "https://hooks.slack.com/...", secret: true, group: "Slack" },
+  { key: "stripeSecretKey", label: "Stripe Secret Key", placeholder: "sk_...", secret: true, group: "Stripe" },
+  { key: "hubspotApiKey", label: "HubSpot API Key", placeholder: "pat-na1-...", secret: true, group: "HubSpot" },
+  { key: "airtableApiKey", label: "Airtable API Key", placeholder: "pat...", secret: true, group: "Airtable" },
+  { key: "airtableBaseId", label: "Airtable Base ID", placeholder: "app...", group: "Airtable" },
+  { key: "googleSheetsClientEmail", label: "Service Account Email", placeholder: "name@project.iam.gserviceaccount.com", group: "Google Sheets" },
+  { key: "googleSheetsPrivateKey",  label: "Private Key", placeholder: "-----BEGIN PRIVATE KEY-----\n...", secret: true, group: "Google Sheets" },
+  { key: "gmailClientId",      label: "OAuth2 Client ID",     placeholder: "xxxx.apps.googleusercontent.com", group: "Gmail" },
+  { key: "gmailClientSecret",  label: "OAuth2 Client Secret", placeholder: "GOCSPX-...", secret: true, group: "Gmail" },
+  { key: "gmailRefreshToken",  label: "Refresh Token",        placeholder: "1//0g...", secret: true, group: "Gmail" },
+];
+
+const STORAGE_KEY = "flowmind_user_config";
+
+export function loadUserConfig(): Partial<IntegrationConfig> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveUserConfig(config: Partial<IntegrationConfig>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+}
+
+function IntegrationGroup({
+  groupName,
+  fields,
+  values,
+  onChange,
+}: {
+  groupName: string;
+  fields: typeof FIELDS;
+  values: Partial<IntegrationConfig>;
+  onChange: (key: keyof IntegrationConfig, value: string) => void;
+}) {
+  const isConnected = fields.some((f) => values[f.key]);
+
+  return (
+    <div
+      className="rounded-xl p-4 mb-3"
+      style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold" style={{ color: "#e2e8f0" }}>
+          {groupName}
+        </span>
+        <span
+          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+          style={
+            isConnected
+              ? { background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }
+              : { background: "rgba(51,65,85,0.3)", color: "#475569", border: "1px solid #1a1a2e" }
+          }
+        >
+          {isConnected ? "Connected" : "Not connected"}
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {fields.map((f) => (
+          <div key={f.key}>
+            <label className="block text-[10px] mb-1" style={{ color: "#475569" }}>
+              {f.label}
+            </label>
+            <input
+              type={f.secret ? "password" : "text"}
+              value={values[f.key] ?? ""}
+              onChange={(e) => onChange(f.key, e.target.value)}
+              placeholder={f.placeholder}
+              className="w-full text-xs rounded-lg px-3 py-2 outline-none transition-all"
+              style={{
+                background: "#080810",
+                border: "1px solid #1a1a2e",
+                color: "#94a3b8",
+                caretColor: "#7c3aed",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#1a1a2e")}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function SettingsPanel({ businessProfile }: { businessProfile?: BusinessProfile | null }) {
+  const [config, setConfig] = useState<Partial<IntegrationConfig>>({});
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setConfig(loadUserConfig());
+  }, []);
+
+  const handleChange = (key: keyof IntegrationConfig, value: string) => {
+    setConfig((prev) => ({ ...prev, [key]: value || undefined }));
+    setSaved(false);
+  };
+
+  const handleSave = () => {
+    const clean = Object.fromEntries(
+      Object.entries(config).filter(([, v]) => v && String(v).trim())
+    ) as Partial<IntegrationConfig>;
+    saveUserConfig(clean);
+    setSaved(true);
+    window.dispatchEvent(new CustomEvent("flowmind-config-saved"));
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const groups = Array.from(new Set(FIELDS.map((f) => f.group)));
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Business Profile Section */}
+      <div className="flex-shrink-0 mb-5 rounded-xl p-4" style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#334155" }}>
+            Business Profile
+          </p>
+          {businessProfile && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)" }}>
+              Active
+            </span>
+          )}
+        </div>
+
+        {businessProfile ? (
+          <>
+            <p className="text-xs font-semibold mb-0.5" style={{ color: "#e2e8f0" }}>{businessProfile.companyName}</p>
+            <p className="text-[11px] mb-3 leading-relaxed" style={{ color: "#475569" }}>{businessProfile.description}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("flowmind-start-onboarding"))}
+                className="flex-1 py-2 rounded-lg text-[11px] font-medium transition-all"
+                style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.18)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.1)")}
+              >
+                Re-run Setup
+              </button>
+              <button
+                onClick={() => { clearProfile(); window.dispatchEvent(new CustomEvent("flowmind-profile-saved")); window.location.reload(); }}
+                className="px-3 py-2 rounded-lg text-[11px] transition-all"
+                style={{ color: "#334155", border: "1px solid #1a1a2e" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#334155"; e.currentTarget.style.borderColor = "#1a1a2e"; }}
+              >
+                Clear
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-[11px] mb-3" style={{ color: "#1e293b" }}>
+              No profile yet. Set one up so the agent knows your business.
+            </p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("flowmind-start-onboarding"))}
+              className="w-full py-2.5 rounded-lg text-xs font-semibold transition-all"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", color: "#fff", boxShadow: "0 0 16px rgba(124,58,237,0.25)" }}
+            >
+              ✦ Start Business Setup
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="flex-shrink-0 mb-4">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#334155" }}>
+          Integrations
+        </p>
+        <p className="text-[11px]" style={{ color: "#1e293b" }}>
+          Keys are saved locally in your browser and sent securely with each request.
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+        {groups.map((group) => (
+          <IntegrationGroup
+            key={group}
+            groupName={group}
+            fields={FIELDS.filter((f) => f.group === group)}
+            values={config}
+            onChange={handleChange}
+          />
+        ))}
+      </div>
+
+      <div className="flex-shrink-0 pt-4" style={{ borderTop: "1px solid #1a1a2e" }}>
+        <button
+          onClick={handleSave}
+          className="w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200"
+          style={
+            saved
+              ? { background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }
+              : { background: "linear-gradient(135deg, #7c3aed, #5b21b6)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }
+          }
+        >
+          {saved ? "✓ Saved" : "Save API Keys"}
+        </button>
+      </div>
+    </div>
+  );
+}

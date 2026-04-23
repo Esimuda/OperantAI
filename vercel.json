@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/api/execution/stream/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/webhook/typeform/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/demo/trigger/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
