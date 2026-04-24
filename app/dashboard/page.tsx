@@ -9,6 +9,7 @@ import RunHistoryPanel from "@/components/RunHistoryPanel";
 import WorkflowLibraryPanel from "@/components/WorkflowLibraryPanel";
 import SettingsPanel from "@/components/SettingsPanel";
 import DashboardPanel from "@/components/DashboardPanel";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import { AgentRun, AgentStage, AgentStreamEvent, BusinessProfile, ChatMessage, ExecutionObservation, PanelView, ReflectionResult, ToolCallRecord } from "@/lib/types";
 import { loadProfile, saveProfile } from "@/lib/db/businessProfile";
 import { persistRun, listRunHistory } from "@/lib/db/runHistory";
@@ -35,6 +36,7 @@ function DashboardInner() {
   const [isOnboarding, setIsOnboarding] = useState(false);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const [oauthToast, setOauthToast] = useState<string | null>(null);
+  const [mobileShowPanel, setMobileShowPanel] = useState(false);
   const [currentStage, setCurrentStage] = useState<{ stage: AgentStage; description: string } | null>(null);
   const [currentReflection, setCurrentReflection] = useState<ReflectionResult | null>(null);
   const [currentObservation, setCurrentObservation] = useState<ExecutionObservation | null>(null);
@@ -159,6 +161,7 @@ function DashboardInner() {
 
       // ── Normal agent mode ────────────────────────────────────────────────────
       setPanelView("run");
+      setMobileShowPanel(true);
 
       const runId = generateId();
       const run: AgentRun = { id: runId, status: "running", userMessage: text.trim(), toolCalls: [], startedAt: Date.now() };
@@ -292,6 +295,17 @@ function DashboardInner() {
 
   const hasActiveRun = currentRun?.status === "running";
 
+  const mobileTab = mobileShowPanel ? panelView : "chat";
+
+  function handleMobileTabChange(tab: "chat" | typeof panelView) {
+    if (tab === "chat") {
+      setMobileShowPanel(false);
+    } else {
+      setPanelView(tab);
+      setMobileShowPanel(true);
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden grid-overlay aurora" style={{ background: "#050508" }}>
       <TopBar activeView={panelView} onViewChange={setPanelView} hasActiveRun={hasActiveRun} />
@@ -299,7 +313,7 @@ function DashboardInner() {
       {/* OAuth success toast */}
       {oauthToast && (
         <div
-          className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl text-xs font-medium shadow-lg"
+          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 px-4 py-3 rounded-xl text-xs font-medium shadow-lg"
           style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}
         >
           {oauthToast}
@@ -307,7 +321,11 @@ function DashboardInner() {
       )}
 
       <main className="flex flex-1 overflow-hidden">
-        <div className="w-full md:w-[40%] flex-shrink-0 overflow-hidden" style={{ borderRight: "1px solid #1a1a2e" }}>
+        {/* Chat panel: full screen on mobile when mobileShowPanel=false, 40% on desktop */}
+        <div
+          className={`flex-shrink-0 overflow-hidden ${mobileShowPanel ? "hidden md:flex md:flex-col" : "flex flex-col"} w-full md:w-[40%]`}
+          style={{ borderRight: "1px solid #1a1a2e" }}
+        >
           <ChatPanel
             messages={messages}
             isLoading={isLoading}
@@ -321,7 +339,10 @@ function DashboardInner() {
           />
         </div>
 
-        <div className="hidden md:flex flex-1 overflow-hidden flex-col px-6 py-6">
+        {/* Right panel: full screen on mobile when mobileShowPanel=true, 60% on desktop */}
+        <div
+          className={`flex-1 overflow-hidden flex-col px-4 py-4 md:px-6 md:py-6 ${mobileShowPanel ? "flex" : "hidden md:flex"}`}
+        >
           {panelView === "run"      && <AgentRunPanel run={currentRun} currentStage={currentStage} reflection={currentReflection} observation={currentObservation} />}
           {panelView === "history"   && <RunHistoryPanel />}
           {panelView === "library"   && <WorkflowLibraryPanel />}
@@ -329,6 +350,12 @@ function DashboardInner() {
           {panelView === "settings"  && <SettingsPanel businessProfile={businessProfile} />}
         </div>
       </main>
+
+      <MobileBottomNav
+        activeTab={mobileTab}
+        onTabChange={handleMobileTabChange}
+        hasActiveRun={hasActiveRun}
+      />
     </div>
   );
 }

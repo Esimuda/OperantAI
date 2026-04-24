@@ -75,6 +75,11 @@ body {
   background-color: #2a2a4a;
 }
 
+/* ── Mobile safe-area bottom padding ── */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ── Step card entrance ── */
 @keyframes fadeInUp {
   from {
