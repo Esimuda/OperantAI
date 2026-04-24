@@ -17,7 +17,7 @@ export function useScheduler() {
           .map((step) => `  ${step.step}. [${step.tool}] ${step.action} → ${step.output}`)
           .join("\n");
         const prompt = [
-          `Execute this scheduled workflow now using your tools — actually call each tool, do not just describe it.`,
+          `Execute this scheduled workflow now — call each tool in sequence using your actual tools. Do not describe or summarise; execute.`,
           ``,
           `WORKFLOW: "${s.blueprint.name}"`,
           `TRIGGER: ${s.blueprint.trigger} (scheduled — ${s.frequency})`,
@@ -25,7 +25,11 @@ export function useScheduler() {
           `STEPS:`,
           steps,
           ``,
-          `Execute each step in order. Summarise results when done.`,
+          `Execution rules:`,
+          `- Run each step in order.`,
+          `- If a step fails, log the error and continue to the next step where possible.`,
+          `- If a step fails and all retries are exhausted, skip it and note the failure.`,
+          `- After all steps, give a plain summary: which steps succeeded, which failed, and any suggested fixes for failures.`,
         ].join("\n");
 
         window.dispatchEvent(

@@ -1,6 +1,5 @@
+import { createClient } from "@/lib/supabase/client";
 import { WorkflowBlueprint } from "@/lib/export/n8n";
-
-const STORAGE_KEY = "flowmind_workflows";
 
 export interface SavedWorkflow {
   id: string;
@@ -8,30 +7,45 @@ export interface SavedWorkflow {
   blueprint: WorkflowBlueprint;
 }
 
-export function saveWorkflow(blueprint: WorkflowBlueprint): SavedWorkflow {
-  const existing = listWorkflows();
-  const entry: SavedWorkflow = {
-    id: Math.random().toString(36).slice(2) + Date.now().toString(36),
-    savedAt: Date.now(),
-    blueprint,
-  };
-  // Replace if same name already saved, otherwise prepend
-  const deduped = existing.filter((w) => w.blueprint.name !== blueprint.name);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([entry, ...deduped]));
-  return entry;
+export async function saveWorkflow(blueprint: WorkflowBlueprint): Promise<SavedWorkflow> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const savedAt = Date.now();
+
+  const { error } = await supabase.from("workflows").upsert(
+    { id, user_id: user.id, name: blueprint.name, blueprint, saved_at: new Date(savedAt).toISOString() },
+    { onConflict: "user_id,name" }
+  );
+  if (error) throw new Error(error.message);
+
+  return { id, savedAt, blueprint };
 }
 
-export function listWorkflows(): SavedWorkflow[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as SavedWorkflow[]) : [];
-  } catch {
-    return [];
-  }
+export async function listWorkflows(): Promise<SavedWorkflow[]> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("workflows")
+    .select("id, saved_at, blueprint")
+    .eq("user_id", user.id)
+    .order("saved_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map((row) => ({
+    id: row.id as string,
+    savedAt: new Date(row.saved_at as string).getTime(),
+    blueprint: row.blueprint as WorkflowBlueprint,
+  }));
 }
 
-export function deleteWorkflow(id: string): void {
-  const updated = listWorkflows().filter((w) => w.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+export async function deleteWorkflow(id: string): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("workflows").delete().eq("id", id).eq("user_id", user.id);
 }

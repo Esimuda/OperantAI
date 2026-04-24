@@ -7,11 +7,12 @@ import AgentRunPanel from "@/components/AgentRunPanel";
 import RunHistoryPanel from "@/components/RunHistoryPanel";
 import WorkflowLibraryPanel from "@/components/WorkflowLibraryPanel";
 import SettingsPanel from "@/components/SettingsPanel";
-import { loadUserConfig } from "@/components/SettingsPanel";
-import { AgentRun, AgentStreamEvent, BusinessProfile, ChatMessage, PanelView, ToolCallRecord } from "@/lib/types";
+import { AgentRun, AgentStage, AgentStreamEvent, BusinessProfile, ChatMessage, ExecutionObservation, PanelView, ReflectionResult, ToolCallRecord } from "@/lib/types";
 import { loadProfile, saveProfile } from "@/lib/db/businessProfile";
-import { persistRun } from "@/lib/db/runHistory";
+import { persistRun, listRunHistory } from "@/lib/db/runHistory";
+import { listWorkflows } from "@/lib/db/workflows";
 import { useScheduler } from "@/lib/useScheduler";
+import { createClient } from "@/lib/supabase/client";
 import Anthropic from "@anthropic-ai/sdk";
 
 function generateId(): string {
@@ -30,6 +31,9 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [isOnboarding, setIsOnboarding] = useState(false);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [currentStage, setCurrentStage] = useState<{ stage: AgentStage; description: string } | null>(null);
+  const [currentReflection, setCurrentReflection] = useState<ReflectionResult | null>(null);
+  const [currentObservation, setCurrentObservation] = useState<ExecutionObservation | null>(null);
 
   const historyRef = useRef<Anthropic.MessageParam[]>([]);
   const isOnboardingRef = useRef(false);
@@ -38,7 +42,7 @@ export default function Home() {
 
   // Load business profile on mount + listen for start-onboarding + run-workflow events
   useEffect(() => {
-    setBusinessProfile(loadProfile());
+    loadProfile().then(setBusinessProfile);
 
     const handleStart = () => startOnboarding();
     window.addEventListener("flowmind-start-onboarding", handleStart);
@@ -107,7 +111,7 @@ export default function Home() {
                 const event = JSON.parse(line.slice(6)) as AgentStreamEvent;
                 if (event.type === "text_delta") finalMessage = event.text;
                 if (event.type === "profile_saved") {
-                  savedProfile = saveProfile(event.profile);
+                  savedProfile = await saveProfile(event.profile);
                   setBusinessProfile(savedProfile);
                   window.dispatchEvent(new CustomEvent("flowmind-profile-saved"));
                   isOnboardingRef.current = false;
@@ -145,6 +149,9 @@ export default function Home() {
       const runId = generateId();
       const run: AgentRun = { id: runId, status: "running", userMessage: text.trim(), toolCalls: [], startedAt: Date.now() };
       setCurrentRun(run);
+      setCurrentStage(null);
+      setCurrentReflection(null);
+      setCurrentObservation(null);
 
       const toolsSummary: string[] = [];
 
@@ -155,8 +162,9 @@ export default function Home() {
           body: JSON.stringify({
             message: text.trim(),
             conversationHistory: historyRef.current,
-            userConfig: loadUserConfig(),
-            businessProfile: loadProfile(),
+            businessProfile: await loadProfile(),
+            savedWorkflows: await listWorkflows(),
+            runHistory: (await listRunHistory()).slice(0, 20),
           }),
         });
 
@@ -196,9 +204,9 @@ export default function Home() {
         { role: "assistant", content: finalMessage || "Done." },
       ];
 
-      // Persist the completed run to localStorage for history
+      // Persist the completed run to Supabase
       setCurrentRun((prev) => {
-        if (prev) persistRun(prev);
+        if (prev) persistRun(prev).catch(console.error);
         return prev;
       });
 
@@ -246,10 +254,21 @@ export default function Home() {
           case "run_complete":
             finalMessage = event.finalMessage;
             setCurrentRun((prev) => prev ? { ...prev, status: "completed", finalMessage: event.finalMessage, completedAt: Date.now() } : prev);
+            setCurrentStage(null);
             break;
           case "run_error":
             setCurrentRun((prev) => prev ? { ...prev, status: "failed", completedAt: Date.now() } : prev);
+            setCurrentStage(null);
             finalMessage = `Error: ${event.error}`;
+            break;
+          case "agent_stage":
+            setCurrentStage({ stage: event.stage, description: event.description });
+            break;
+          case "reflection_complete":
+            setCurrentReflection(event.reflection);
+            break;
+          case "observation":
+            setCurrentObservation(event.observation);
             break;
         }
       }
@@ -279,7 +298,7 @@ export default function Home() {
         </div>
 
         <div className="hidden md:flex flex-1 overflow-hidden flex-col px-6 py-6">
-          {panelView === "run"      && <AgentRunPanel run={currentRun} />}
+          {panelView === "run"      && <AgentRunPanel run={currentRun} currentStage={currentStage} reflection={currentReflection} observation={currentObservation} />}
           {panelView === "history"  && <RunHistoryPanel />}
           {panelView === "library"  && <WorkflowLibraryPanel />}
           {panelView === "settings" && <SettingsPanel businessProfile={businessProfile} />}

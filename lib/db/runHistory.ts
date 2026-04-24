@@ -1,41 +1,54 @@
+import { createClient } from "@/lib/supabase/client";
 import { AgentRun } from "@/lib/types";
 
-const KEY = "flowmind_run_history";
 const MAX_RUNS = 50;
 
-function load(): AgentRun[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "[]") as AgentRun[];
-  } catch {
-    return [];
-  }
-}
-
-function save(runs: AgentRun[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(KEY, JSON.stringify(runs.slice(0, MAX_RUNS)));
-}
-
-export function persistRun(run: AgentRun): void {
+export async function persistRun(run: AgentRun): Promise<void> {
   if (run.status === "running") return;
-  const runs = load();
-  const idx = runs.findIndex((r) => r.id === run.id);
-  if (idx !== -1) {
-    runs[idx] = run;
-  } else {
-    runs.unshift(run);
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("run_history").upsert(
+    { id: run.id, user_id: user.id, run, started_at: new Date(run.startedAt).toISOString() },
+    { onConflict: "id" }
+  );
+
+  // Keep only the last MAX_RUNS per user
+  const { data } = await supabase
+    .from("run_history")
+    .select("id, started_at")
+    .eq("user_id", user.id)
+    .order("started_at", { ascending: false });
+
+  if (data && data.length > MAX_RUNS) {
+    const toDelete = data.slice(MAX_RUNS).map((r) => r.id as string);
+    await supabase.from("run_history").delete().in("id", toDelete).eq("user_id", user.id);
   }
-  save(runs);
+
   window.dispatchEvent(new CustomEvent("flowmind-run-saved"));
 }
 
-export function listRunHistory(): AgentRun[] {
-  return load();
+export async function listRunHistory(): Promise<AgentRun[]> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("run_history")
+    .select("run")
+    .eq("user_id", user.id)
+    .order("started_at", { ascending: false })
+    .limit(MAX_RUNS);
+
+  if (error || !data) return [];
+  return data.map((row) => row.run as AgentRun);
 }
 
-export function clearRunHistory(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(KEY);
+export async function clearRunHistory(): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("run_history").delete().eq("user_id", user.id);
   window.dispatchEvent(new CustomEvent("flowmind-run-saved"));
 }

@@ -28,19 +28,20 @@ const FIELDS: Array<{
 
 const STORAGE_KEY = "flowmind_user_config";
 
+// Reads from localStorage — used by ChatPanel to show connected status
+// and as a migration source when first upgrading to Supabase storage
 export function loadUserConfig(): Partial<IntegrationConfig> {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    return raw ? (JSON.parse(raw) as Partial<IntegrationConfig>) : {};
   } catch {
     return {};
   }
 }
 
-function saveUserConfig(config: Partial<IntegrationConfig>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-}
+// Alias used internally
+const readLocalConfig = loadUserConfig;
 
 function IntegrationGroup({
   groupName,
@@ -107,9 +108,38 @@ function IntegrationGroup({
 export default function SettingsPanel({ businessProfile }: { businessProfile?: BusinessProfile | null }) {
   const [config, setConfig] = useState<Partial<IntegrationConfig>>({});
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Load from Supabase on mount; fall back to localStorage for migration
   useEffect(() => {
-    setConfig(loadUserConfig());
+    async function loadConfig() {
+      try {
+        const res = await fetch("/api/integrations");
+        if (res.ok) {
+          const { config: remote } = await res.json() as { config: Partial<IntegrationConfig> };
+          // Merge: remote takes precedence, but fill gaps from localStorage migration
+          const local = readLocalConfig();
+          const merged = { ...local, ...remote };
+          setConfig(merged);
+          // If we had local data but nothing remote yet, migrate it now
+          if (Object.keys(local).length > 0 && Object.keys(remote).length === 0) {
+            await fetch("/api/integrations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ config: local }),
+            });
+          }
+        } else {
+          setConfig(readLocalConfig());
+        }
+      } catch {
+        setConfig(readLocalConfig());
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadConfig();
   }, []);
 
   const handleChange = (key: keyof IntegrationConfig, value: string) => {
@@ -117,14 +147,32 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
     setSaved(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true);
     const clean = Object.fromEntries(
       Object.entries(config).filter(([, v]) => v && String(v).trim())
     ) as Partial<IntegrationConfig>;
-    saveUserConfig(clean);
-    setSaved(true);
-    window.dispatchEvent(new CustomEvent("flowmind-config-saved"));
-    setTimeout(() => setSaved(false), 2000);
+
+    try {
+      const res = await fetch("/api/integrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: clean }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      // Also persist to localStorage so the app works if API is unreachable
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+      setSaved(true);
+      window.dispatchEvent(new CustomEvent("flowmind-config-saved"));
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Fallback: at least save locally
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const groups = Array.from(new Set(FIELDS.map((f) => f.group)));
@@ -186,11 +234,16 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
       </div>
 
       <div className="flex-shrink-0 mb-4">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#334155" }}>
-          Integrations
-        </p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#334155" }}>
+            Integrations
+          </p>
+          {loading && (
+            <span className="text-[10px]" style={{ color: "#334155" }}>Loading...</span>
+          )}
+        </div>
         <p className="text-[11px]" style={{ color: "#1e293b" }}>
-          Keys are saved locally in your browser and sent securely with each request.
+          Keys are stored in your account and fetched server-side — never sent from your browser.
         </p>
       </div>
 
@@ -216,7 +269,7 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
               : { background: "linear-gradient(135deg, #7c3aed, #5b21b6)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }
           }
         >
-          {saved ? "✓ Saved" : "Save API Keys"}
+          {saving ? "Saving..." : saved ? "✓ Saved" : "Save API Keys"}
         </button>
       </div>
     </div>

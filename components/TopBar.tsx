@@ -1,6 +1,8 @@
 "use client";
 
 import { PanelView } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface TopBarProps {
   activeView: PanelView;
@@ -16,6 +18,15 @@ const VIEWS: { id: PanelView; label: string }[] = [
 ];
 
 export default function TopBar({ activeView, onViewChange, hasActiveRun }: TopBarProps) {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/auth");
+    router.refresh();
+  }
+
   return (
     <header
       className="h-14 flex items-center justify-between px-6 flex-shrink-0"
@@ -52,6 +63,23 @@ export default function TopBar({ activeView, onViewChange, hasActiveRun }: TopBa
           </span>
         </span>
       </div>
+
+      {/* Sign out */}
+      <button
+        onClick={handleSignOut}
+        className="hidden md:block text-xs px-3 py-1.5 rounded-lg transition-all absolute right-[260px]"
+        style={{ color: "#475569", border: "1px solid transparent" }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#94a3b8";
+          e.currentTarget.style.borderColor = "#1a1a2e";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "#475569";
+          e.currentTarget.style.borderColor = "transparent";
+        }}
+      >
+        Sign out
+      </button>
 
       {/* Toggle buttons */}
       <div

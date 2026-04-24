@@ -1,8 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getActiveTools } from "./tools";
-import { executeTool } from "./executor";
-import { AgentStreamEvent, BusinessProfile, IntegrationConfig } from "@/lib/types";
+import { executeTool, RunContext } from "./executor";
+import { AgentRun, AgentStreamEvent, BusinessProfile, IntegrationConfig } from "@/lib/types";
 import { INTEGRATION_META } from "@/lib/integrations/meta";
+import type { SavedWorkflow } from "@/lib/db/workflows";
 
 function buildBusinessContext(profile: BusinessProfile): string {
   const toolLines = Object.entries(profile.tools)
@@ -58,7 +59,12 @@ Available tools:
 - sheets_read_rows / sheets_append_row / sheets_find_rows — Google Sheets
 - gmail_send_email / gmail_search_emails / gmail_read_email — Gmail
 - calendar_list_events / calendar_create_event — Google Calendar (uses Gmail credentials)
-- build_workflow — always available: design a multi-step automation blueprint (no credentials needed)
+- build_workflow — always available: design a new multi-step automation blueprint with optional parallel steps
+- execute_workflow — always available: run a named workflow using dependency-aware parallel execution
+- list_workflows — always available: list all saved workflows in the library
+- get_workflow — always available: read a saved workflow's full blueprint by name
+- update_workflow — always available: modify and save changes to an existing workflow
+- get_run_history — always available: view recent run results to debug failures
 
 BEHAVIOR RULES:
 1. ONLY call tools for CONNECTED integrations listed above. The tool list you receive is already filtered to your connected integrations — stay within it.
@@ -68,6 +74,17 @@ BEHAVIOR RULES:
 5. After using tools, give a concise summary of what was done and the results.
 6. For multi-step tasks, execute all steps in sequence unless an error occurs.
 7. Be direct and professional. This is a tool for experts.
+8. When a user asks to run a named workflow, call execute_workflow — it loads the blueprint, builds the dependency graph, and tells you exactly which tools to call and which can run in parallel. Follow its execution plan precisely.
+9. When asked to modify, fix, or improve a workflow, call get_workflow to read the current blueprint, apply the requested changes, then call update_workflow to save the updated version.
+10. When a workflow keeps failing or a user asks why something broke, call get_run_history to identify the pattern, then diagnose and fix it.
+11. When building or updating workflows with independent steps (e.g. send email AND create Notion record, neither depends on the other), set dependencies: [] on those steps so execute_workflow can run them in parallel.
+
+RESPONSE STYLE — follow these strictly:
+- Write in plain prose. Do not use markdown formatting: no asterisks, no bold, no italics, no bullet point symbols, no hyphens as list markers, no headers with #.
+- Do not use emojis of any kind.
+- Do not use tables. Present data as simple numbered lists or plain sentences.
+- Keep responses short and factual. State what was done and the key result. Nothing more.
+- Do not add motivational closings, offers to help further, or rhetorical questions at the end.
 
 You are not a general-purpose chatbot. Stay focused on automations, operations, and workflows.`;
 }
@@ -79,10 +96,13 @@ export interface RunnerOptions {
   emit: (event: AgentStreamEvent) => void;
   config: IntegrationConfig;
   businessProfile?: BusinessProfile | null;
+  savedWorkflows?: SavedWorkflow[];
+  runHistory?: AgentRun[];
 }
 
 export async function runAgent(options: RunnerOptions): Promise<string> {
-  const { message, conversationHistory, runId, emit, config, businessProfile } = options;
+  const { message, conversationHistory, runId, emit, config, businessProfile, savedWorkflows, runHistory } = options;
+  const runContext: RunContext = { savedWorkflows, runHistory };
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -136,7 +156,8 @@ export async function runAgent(options: RunnerOptions): Promise<string> {
         const result = await executeTool(
           block.name,
           block.input as Record<string, unknown>,
-          config
+          config,
+          runContext
         );
 
         const durationMs = Date.now() - startedAt;

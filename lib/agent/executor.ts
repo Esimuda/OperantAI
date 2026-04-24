@@ -1,4 +1,6 @@
-import { IntegrationConfig } from "@/lib/types";
+import { AgentRun, IntegrationConfig } from "@/lib/types";
+import type { SavedWorkflow } from "@/lib/db/workflows";
+import { buildExecutionPlan, formatExecutionPlan, type DagStep } from "@/lib/agent/dag";
 import * as notion from "@/lib/integrations/notion";
 import * as resend from "@/lib/integrations/resend";
 import * as slack from "@/lib/integrations/slack";
@@ -9,6 +11,11 @@ import * as sheets from "@/lib/integrations/sheets";
 import * as gmail from "@/lib/integrations/gmail";
 import * as calendar from "@/lib/integrations/calendar";
 
+export interface RunContext {
+  savedWorkflows?: SavedWorkflow[];
+  runHistory?: AgentRun[];
+}
+
 export interface ToolResult {
   output: string;
   isError: boolean;
@@ -17,10 +24,11 @@ export interface ToolResult {
 export async function executeTool(
   toolName: string,
   input: Record<string, unknown>,
-  config: IntegrationConfig
+  config: IntegrationConfig,
+  context?: RunContext
 ): Promise<ToolResult> {
   try {
-    const output = await dispatch(toolName, input, config);
+    const output = await dispatch(toolName, input, config, context);
     return { output, isError: false };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -31,7 +39,8 @@ export async function executeTool(
 async function dispatch(
   toolName: string,
   input: Record<string, unknown>,
-  config: IntegrationConfig
+  config: IntegrationConfig,
+  context?: RunContext
 ): Promise<string> {
   switch (toolName) {
     case "notion_create_page": {
@@ -205,6 +214,93 @@ async function dispatch(
       const { gmailClientId: cid, gmailClientSecret: csec, gmailRefreshToken: rtok } = config;
       if (!cid || !csec || !rtok) throw new Error("Gmail is not connected. Please add your OAuth2 credentials in Settings.");
       return gmail.readEmail(cid, csec, rtok, input.message_id as string);
+    }
+
+    case "execute_workflow": {
+      const name = input.name as string;
+      const workflows = context?.savedWorkflows ?? [];
+      const found = workflows.find(
+        (w) => w.blueprint.name.toLowerCase() === name.toLowerCase()
+      );
+      if (!found) {
+        const names = workflows.map((w) => `"${w.blueprint.name}"`).join(", ");
+        return `No workflow named "${name}" found. Available: ${names || "none"}.`;
+      }
+      const bp = found.blueprint;
+      const rounds = buildExecutionPlan(bp.steps as DagStep[]);
+      return formatExecutionPlan(bp.name, bp.trigger, rounds);
+    }
+
+    case "list_workflows": {
+      const workflows = context?.savedWorkflows ?? [];
+      if (workflows.length === 0) {
+        return "No workflows saved yet. Use build_workflow to create one.";
+      }
+      const lines = workflows.map(
+        (w, i) =>
+          `${i + 1}. "${w.blueprint.name}" — Trigger: ${w.blueprint.trigger} — ${w.blueprint.steps.length} step${w.blueprint.steps.length !== 1 ? "s" : ""}`
+      );
+      return `${workflows.length} workflow${workflows.length !== 1 ? "s" : ""} saved:\n${lines.join("\n")}`;
+    }
+
+    case "get_workflow": {
+      const name = input.name as string;
+      const workflows = context?.savedWorkflows ?? [];
+      const found = workflows.find(
+        (w) => w.blueprint.name.toLowerCase() === name.toLowerCase()
+      );
+      if (!found) {
+        const names = workflows.map((w) => `"${w.blueprint.name}"`).join(", ");
+        return `No workflow named "${name}" found. Available workflows: ${names || "none"}.`;
+      }
+      const bp = found.blueprint;
+      const steps = bp.steps
+        .map((s) => `  ${s.step}. [${s.tool}] ${s.action} → ${s.output}`)
+        .join("\n");
+      return `Workflow: "${bp.name}"\nTrigger: ${bp.trigger}\nSteps:\n${steps}\nExpected outcome: ${bp.expected_outcome}\n\nTo modify this workflow, call update_workflow with the full updated blueprint.\nBlueprint JSON: ${JSON.stringify(bp)}`;
+    }
+
+    case "update_workflow": {
+      const { change_summary, ...blueprintRaw } = input as {
+        name: string;
+        trigger: string;
+        steps: Array<{ step: number; action: string; tool: string; output: string }>;
+        expected_outcome: string;
+        change_summary?: string;
+      };
+      const steps = blueprintRaw.steps
+        .map((s) => `  ${s.step}. [${s.tool}] ${s.action}`)
+        .join("\n");
+      const changeNote = change_summary ? `Changes: ${change_summary}\n` : "";
+      return `Workflow "${blueprintRaw.name}" updated and saved.\n${changeNote}Steps:\n${steps}\n__WORKFLOW_JSON__:${JSON.stringify(blueprintRaw)}`;
+    }
+
+    case "get_run_history": {
+      const limit = Math.min((input.limit as number | undefined) ?? 5, 20);
+      const filter = input.filter as string | undefined;
+      const runs = context?.runHistory ?? [];
+      const filtered = filter
+        ? runs.filter((r) =>
+            r.userMessage.toLowerCase().includes(filter.toLowerCase())
+          )
+        : runs;
+      const recent = filtered.slice(0, limit);
+      if (recent.length === 0) {
+        return filter
+          ? `No runs found matching "${filter}".`
+          : "No run history available yet.";
+      }
+      const lines = recent.map((r, i) => {
+        const status = r.status === "completed" ? "OK" : "FAILED";
+        const tools = r.toolCalls.map((tc) => tc.toolName).join(", ");
+        const errors = r.toolCalls
+          .filter((tc) => tc.status === "error")
+          .map((tc) => `    - ${tc.toolName}: ${tc.error}`)
+          .join("\n");
+        const date = new Date(r.startedAt).toLocaleString();
+        return `${i + 1}. [${status}] "${r.userMessage.slice(0, 70)}${r.userMessage.length > 70 ? "…" : ""}"\n   ${date} | Tools used: ${tools || "none"}${errors ? `\n   Errors:\n${errors}` : ""}`;
+      });
+      return `Last ${recent.length} run${recent.length !== 1 ? "s" : ""}:\n\n${lines.join("\n\n")}`;
     }
 
     default:

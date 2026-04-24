@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AgentRun } from "@/lib/types";
+import { AgentRun, AgentStage, ExecutionObservation, ReflectionResult } from "@/lib/types";
 import ToolCallCard from "./ToolCallCard";
 import { toN8nJson, toMakeJson, WorkflowBlueprint } from "@/lib/export/n8n";
 import { toZapierJson } from "@/lib/export/zapier";
@@ -101,6 +101,120 @@ function StatusBadge({ status }: { status: AgentRun["status"] }) {
   );
 }
 
+const STAGE_LABELS: Record<AgentStage, string> = {
+  interpreting:    "Interpreting intent",
+  planning:        "Planning steps",
+  selecting_tools: "Selecting tools",
+  building:        "Building workflow",
+  executing:       "Executing",
+  observing:       "Observing results",
+  reflecting:      "Reflecting",
+  optimizing:      "Optimizing",
+  complete:        "Complete",
+};
+
+function StageIndicator({ stage, description }: { stage: AgentStage; description: string }) {
+  const stages: AgentStage[] = [
+    "interpreting", "planning", "selecting_tools", "building",
+    "executing", "observing", "reflecting", "optimizing",
+  ];
+  const idx = stages.indexOf(stage);
+
+  return (
+    <div
+      className="rounded-xl p-3 mb-3"
+      style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.18)" }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span
+          className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
+          style={{ background: "#7c3aed" }}
+        />
+        <span className="text-[11px] font-semibold" style={{ color: "#a78bfa" }}>
+          {STAGE_LABELS[stage]}
+        </span>
+        <span className="text-[10px] ml-1" style={{ color: "#475569" }}>
+          {description}
+        </span>
+      </div>
+      <div className="flex gap-1">
+        {stages.map((s, i) => (
+          <div
+            key={s}
+            className="flex-1 h-0.5 rounded-full transition-all duration-500"
+            style={{
+              background: i < idx
+                ? "#7c3aed"
+                : i === idx
+                ? "rgba(124,58,237,0.6)"
+                : "rgba(124,58,237,0.12)",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReflectionCard({ reflection }: { reflection: ReflectionResult }) {
+  if (!reflection.hasIssues) return null;
+  return (
+    <div
+      className="rounded-xl p-3 mt-2"
+      style={{ background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.18)" }}
+    >
+      <p className="text-[11px] font-semibold mb-1.5" style={{ color: "#eab308" }}>
+        Reflection — {reflection.summary}
+      </p>
+      {reflection.issues.slice(0, 3).map((issue, i) => (
+        <div key={i} className="mb-1 last:mb-0">
+          <p className="text-[10px]" style={{ color: "#94a3b8" }}>
+            <span style={{ color: "#fbbf24" }}>Issue:</span> {issue.issue}
+          </p>
+          <p className="text-[10px]" style={{ color: "#94a3b8" }}>
+            <span style={{ color: "#86efac" }}>Fix:</span> {issue.fix}
+          </p>
+        </div>
+      ))}
+      {reflection.shouldRetry && (
+        <p className="text-[10px] mt-1.5 font-medium" style={{ color: "#a78bfa" }}>
+          Self-healing retry queued
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ObservationCard({ obs }: { obs: ExecutionObservation }) {
+  const pct = Math.round(obs.successRate * 100);
+  return (
+    <div
+      className="rounded-xl p-3 mt-2"
+      style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.12)" }}
+    >
+      <p className="text-[11px] font-semibold mb-1" style={{ color: "#22c55e" }}>
+        Execution metrics
+      </p>
+      <div className="flex gap-4 flex-wrap">
+        <span className="text-[10px]" style={{ color: "#94a3b8" }}>
+          Success rate: <span style={{ color: pct === 100 ? "#22c55e" : "#eab308" }}>{pct}%</span>
+        </span>
+        <span className="text-[10px]" style={{ color: "#94a3b8" }}>
+          Tools called: {obs.toolCallCount}
+        </span>
+        <span className="text-[10px]" style={{ color: "#94a3b8" }}>
+          Time: {obs.executionTimeMs < 1000 ? `${obs.executionTimeMs}ms` : `${(obs.executionTimeMs / 1000).toFixed(1)}s`}
+        </span>
+        {obs.totalRetries > 0 && (
+          <span className="text-[10px]" style={{ color: "#94a3b8" }}>
+            Retries: {obs.totalRetries}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-16 text-center">
@@ -120,18 +234,30 @@ function EmptyState() {
   );
 }
 
-export default function AgentRunPanel({ run }: { run: AgentRun | null }) {
+export default function AgentRunPanel({
+  run,
+  currentStage,
+  reflection,
+  observation,
+}: {
+  run: AgentRun | null;
+  currentStage?: { stage: AgentStage; description: string } | null;
+  reflection?: ReflectionResult | null;
+  observation?: ExecutionObservation | null;
+}) {
   const savedIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!run) return;
     for (const tc of run.toolCalls) {
-      if (tc.toolName === "build_workflow" && tc.status === "success" && tc.output && !savedIds.current.has(tc.id)) {
+      const isWorkflowTool = tc.toolName === "build_workflow" || tc.toolName === "update_workflow";
+      if (isWorkflowTool && tc.status === "success" && tc.output && !savedIds.current.has(tc.id)) {
         const workflow = extractWorkflowFromOutput(tc.output);
         if (workflow) {
           savedIds.current.add(tc.id);
-          saveWorkflow(workflow);
-          window.dispatchEvent(new CustomEvent("flowmind-workflow-saved"));
+          saveWorkflow(workflow).then(() => {
+            window.dispatchEvent(new CustomEvent("flowmind-workflow-saved"));
+          }).catch(console.error);
         }
       }
     }
@@ -162,9 +288,14 @@ export default function AgentRunPanel({ run }: { run: AgentRun | null }) {
         </div>
       </div>
 
+      {/* AOS stage + metrics */}
+      {currentStage && currentStage.stage !== "complete" && (
+        <StageIndicator stage={currentStage.stage} description={currentStage.description} />
+      )}
+
       {/* Tool call timeline */}
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
-        {run.toolCalls.length === 0 && run.status === "running" ? (
+        {run.toolCalls.length === 0 && run.status === "running" && !currentStage ? (
           <div className="flex items-center gap-2 py-3">
             <span
               className="w-3 h-3 rounded-full border-2 animate-spin flex-shrink-0"
@@ -176,7 +307,7 @@ export default function AgentRunPanel({ run }: { run: AgentRun | null }) {
           </div>
         ) : (
           run.toolCalls.map((tc) => {
-          const workflow = tc.toolName === "build_workflow" && tc.output
+          const workflow = (tc.toolName === "build_workflow" || tc.toolName === "update_workflow") && tc.output
             ? extractWorkflowFromOutput(tc.output)
             : null;
           return (
@@ -187,6 +318,10 @@ export default function AgentRunPanel({ run }: { run: AgentRun | null }) {
           );
         })
         )}
+
+        {/* Observation + reflection */}
+        {observation && <ObservationCard obs={observation} />}
+        {reflection && <ReflectionCard reflection={reflection} />}
 
         {/* Final message */}
         {run.finalMessage && (

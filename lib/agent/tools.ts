@@ -164,7 +164,7 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
         },
         steps: {
           type: "array",
-          description: "Ordered list of steps in the workflow.",
+          description: "Ordered list of steps. Set dependencies to enable parallel execution — steps with no unmet dependencies run simultaneously.",
           items: {
             type: "object",
             properties: {
@@ -172,6 +172,11 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
               action: { type: "string" },
               tool: { type: "string" },
               output: { type: "string" },
+              dependencies: {
+                type: "array",
+                items: { type: "number" },
+                description: "Step numbers that must succeed before this step runs. Omit to default to sequential (depends on previous step). Set to [] to run in parallel with other independent steps.",
+              },
             },
             required: ["step", "action", "tool", "output"],
           },
@@ -369,10 +374,110 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
       required: ["message_id"],
     },
   },
+  {
+    name: "execute_workflow",
+    description:
+      "Execute a saved workflow by name using dependency-aware parallel execution. Loads the blueprint, builds an optimized execution plan respecting step dependencies, and tells you exactly which tools to call and in what order — including which steps can run in parallel. Use this instead of manually calling get_workflow and guessing the order.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: {
+          type: "string",
+          description: "Name of the workflow to execute (case-insensitive).",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "list_workflows",
+    description:
+      "List all saved workflows in the library. Use this when the user asks about saved workflows, wants to run a specific one by name, or when you need to know what automations exist.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_workflow",
+    description:
+      "Get the full blueprint of a specific saved workflow by name. Always call this before executing a named workflow or before modifying one with update_workflow.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: {
+          type: "string",
+          description: "The exact name of the workflow to retrieve (case-insensitive).",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "update_workflow",
+    description:
+      "Modify and save changes to an existing workflow. Use when the user wants to edit, fix, extend, or improve a workflow. Always call get_workflow first to read the current blueprint, then call this with the full updated blueprint.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Name of the workflow (must match existing workflow name exactly)." },
+        trigger: { type: "string", description: "What triggers this workflow." },
+        steps: {
+          type: "array",
+          description: "Complete updated list of steps. Include dependencies to control parallel/sequential execution.",
+          items: {
+            type: "object",
+            properties: {
+              step: { type: "number" },
+              action: { type: "string" },
+              tool: { type: "string" },
+              output: { type: "string" },
+              dependencies: {
+                type: "array",
+                items: { type: "number" },
+                description: "Step numbers that must succeed before this step runs. Omit for sequential. Set to [] for fully parallel.",
+              },
+            },
+            required: ["step", "action", "tool", "output"],
+          },
+        },
+        expected_outcome: { type: "string", description: "What the workflow accomplishes when it runs." },
+        change_summary: { type: "string", description: "Brief description of what was changed and why." },
+      },
+      required: ["name", "trigger", "steps", "expected_outcome"],
+    },
+  },
+  {
+    name: "get_run_history",
+    description:
+      "Get recent agent run records. Use to understand past failures, debug recurring errors, or learn why a workflow keeps breaking.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        limit: {
+          type: "number",
+          description: "How many recent runs to return. Default 5, max 20.",
+        },
+        filter: {
+          type: "string",
+          description: "Optional keyword to filter runs by — matches against the user message text.",
+        },
+      },
+      required: [],
+    },
+  },
 ];
 
 export function getActiveTools(config: IntegrationConfig): Anthropic.Tool[] {
-  const activeToolNames = new Set<string>(["build_workflow"]);
+  const activeToolNames = new Set<string>([
+    "build_workflow",
+    "execute_workflow",
+    "list_workflows",
+    "get_workflow",
+    "update_workflow",
+    "get_run_history",
+  ]);
   for (const meta of INTEGRATION_META) {
     if (meta.isConnected(config)) {
       meta.tools.forEach((t) => activeToolNames.add(t));

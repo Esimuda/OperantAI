@@ -3,6 +3,7 @@ export interface WorkflowStep {
   action: string;
   tool: string;
   output: string;
+  dependencies?: number[];
 }
 
 export interface WorkflowBlueprint {

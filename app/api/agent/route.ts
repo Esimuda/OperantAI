@@ -1,38 +1,42 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { runAgent } from "@/lib/agent/runner";
+import { runOrchestrator } from "@/lib/agent/orchestrator";
 import { saveRun, updateRun } from "@/lib/db/runs";
+import { createClient } from "@/lib/supabase/server";
+import { loadIntegrationConfig } from "@/lib/db/integrations";
 import { AgentRun, AgentStreamEvent, BusinessProfile, IntegrationConfig, ToolCallRecord } from "@/lib/types";
+import type { SavedWorkflow } from "@/lib/db/workflows";
 
 function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function getIntegrationConfig(userConfig?: Partial<IntegrationConfig>): IntegrationConfig {
-  // User-provided keys take precedence over server env vars
+// Supabase-stored keys take precedence over env vars; env vars are the fallback
+function mergeWithEnv(stored: Partial<IntegrationConfig>): IntegrationConfig {
   return {
-    notionApiKey:            userConfig?.notionApiKey            || process.env.NOTION_API_KEY,
-    notionDatabaseId:        userConfig?.notionDatabaseId        || process.env.NOTION_DATABASE_ID,
-    resendApiKey:            userConfig?.resendApiKey            || process.env.RESEND_API_KEY,
-    slackWebhookUrl:         userConfig?.slackWebhookUrl         || process.env.SLACK_WEBHOOK_URL,
-    stripeSecretKey:         userConfig?.stripeSecretKey         || process.env.STRIPE_SECRET_KEY,
-    hubspotApiKey:           userConfig?.hubspotApiKey           || process.env.HUBSPOT_API_KEY,
-    airtableApiKey:          userConfig?.airtableApiKey          || process.env.AIRTABLE_API_KEY,
-    airtableBaseId:          userConfig?.airtableBaseId          || process.env.AIRTABLE_BASE_ID,
-    googleSheetsClientEmail: userConfig?.googleSheetsClientEmail || process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-    googleSheetsPrivateKey:  userConfig?.googleSheetsPrivateKey  || process.env.GOOGLE_SHEETS_PRIVATE_KEY,
-    gmailClientId:           userConfig?.gmailClientId           || process.env.GMAIL_CLIENT_ID,
-    gmailClientSecret:       userConfig?.gmailClientSecret       || process.env.GMAIL_CLIENT_SECRET,
-    gmailRefreshToken:       userConfig?.gmailRefreshToken       || process.env.GMAIL_REFRESH_TOKEN,
+    notionApiKey:            stored.notionApiKey            || process.env.NOTION_API_KEY,
+    notionDatabaseId:        stored.notionDatabaseId        || process.env.NOTION_DATABASE_ID,
+    resendApiKey:            stored.resendApiKey            || process.env.RESEND_API_KEY,
+    slackWebhookUrl:         stored.slackWebhookUrl         || process.env.SLACK_WEBHOOK_URL,
+    stripeSecretKey:         stored.stripeSecretKey         || process.env.STRIPE_SECRET_KEY,
+    hubspotApiKey:           stored.hubspotApiKey           || process.env.HUBSPOT_API_KEY,
+    airtableApiKey:          stored.airtableApiKey          || process.env.AIRTABLE_API_KEY,
+    airtableBaseId:          stored.airtableBaseId          || process.env.AIRTABLE_BASE_ID,
+    googleSheetsClientEmail: stored.googleSheetsClientEmail || process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+    googleSheetsPrivateKey:  stored.googleSheetsPrivateKey  || process.env.GOOGLE_SHEETS_PRIVATE_KEY,
+    gmailClientId:           stored.gmailClientId           || process.env.GMAIL_CLIENT_ID,
+    gmailClientSecret:       stored.gmailClientSecret       || process.env.GMAIL_CLIENT_SECRET,
+    gmailRefreshToken:       stored.gmailRefreshToken       || process.env.GMAIL_REFRESH_TOKEN,
   };
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const { message, conversationHistory = [], userConfig, businessProfile } = await req.json() as {
+  const { message, conversationHistory = [], businessProfile, savedWorkflows, runHistory } = await req.json() as {
     message: string;
     conversationHistory?: Anthropic.MessageParam[];
-    userConfig?: Partial<IntegrationConfig>;
     businessProfile?: BusinessProfile | null;
+    savedWorkflows?: SavedWorkflow[];
+    runHistory?: AgentRun[];
   };
 
   if (!message?.trim()) {
@@ -93,13 +97,26 @@ export async function POST(req: NextRequest): Promise<Response> {
       emit({ type: "run_started", runId });
 
       try {
-        const finalMessage = await runAgent({
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id ?? "anonymous";
+
+        // Fetch credentials from Supabase server-side — keys never travel from client
+        const storedConfig = userId !== "anonymous"
+          ? await loadIntegrationConfig(userId)
+          : {};
+        const config = mergeWithEnv(storedConfig);
+
+        const finalMessage = await runOrchestrator({
           message,
           conversationHistory,
           runId,
           emit,
-          config: getIntegrationConfig(userConfig),
+          config,
           businessProfile,
+          savedWorkflows,
+          runHistory,
+          userId,
         });
 
         updateRun(runId, { status: "completed", finalMessage, completedAt: Date.now() });
