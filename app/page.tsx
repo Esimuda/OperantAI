@@ -4,7 +4,7 @@ const FEATURES = [
   {
     icon: "⚡",
     title: "Goal-driven automation",
-    body: "Describe what you want in plain language. FlowMind interprets intent, plans steps, selects tools, and executes — no configuration required.",
+    body: "Describe what you want in plain language. Operant interprets intent, plans steps, selects tools, and executes — no configuration required.",
   },
   {
     icon: "🔁",
@@ -52,7 +52,7 @@ export default function LandingPage() {
           >
             <span style={{ fontSize: 14 }}>⚡</span>
           </div>
-          <span className="text-sm font-semibold" style={{ color: "#e2e8f0" }}>FlowMind AI</span>
+          <span className="text-sm font-semibold" style={{ color: "#e2e8f0" }}>Operant AI</span>
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -90,7 +90,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="text-lg mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: "#64748b" }}>
-          Describe what you want to automate. FlowMind builds the workflow, executes it, and self-heals when things go wrong — no specialists required.
+          Describe what you want to automate. Operant builds the workflow, executes it, and self-heals when things go wrong — no specialists required.
         </p>
 
         <div className="flex items-center justify-center gap-4 flex-wrap">
@@ -176,7 +176,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="px-6 py-8 text-center" style={{ borderTop: "1px solid #1a1a2e" }}>
         <p className="text-xs" style={{ color: "#1e293b" }}>
-          FlowMind AI — Autonomous Operations Agent
+          Operant AI — Autonomous Operations Agent
         </p>
       </footer>
     </div>

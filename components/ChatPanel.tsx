@@ -21,7 +21,7 @@ interface ChatPanelProps {
 
 const PLACEHOLDER_PROMPTS = [
   "Add a new lead to my Notion database for Sarah Chen at Acme Corp",
-  "Send a welcome email to john@example.com from FlowMind AI",
+  "Send a welcome email to john@example.com from Operant AI",
   "Show me the last 5 Stripe charges",
   "Build a workflow: when a new Stripe customer signs up, add to Notion and send a welcome email",
 ];
@@ -139,11 +139,11 @@ export default function ChatPanel({
   useEffect(() => {
     refreshConnected();
     refreshQuickActions();
-    window.addEventListener("flowmind-config-saved", refreshConnected);
-    window.addEventListener("flowmind-profile-saved", refreshQuickActions);
+    window.addEventListener("operant-config-saved", refreshConnected);
+    window.addEventListener("operant-profile-saved", refreshQuickActions);
     return () => {
-      window.removeEventListener("flowmind-config-saved", refreshConnected);
-      window.removeEventListener("flowmind-profile-saved", refreshQuickActions);
+      window.removeEventListener("operant-config-saved", refreshConnected);
+      window.removeEventListener("operant-profile-saved", refreshQuickActions);
     };
   }, [refreshConnected, refreshQuickActions]);
 
@@ -192,7 +192,7 @@ export default function ChatPanel({
               <span className="text-xl">⚡</span>
             </div>
             <h2 className="font-semibold text-lg mb-1" style={{ color: "#e2e8f0" }}>
-              FlowMind AI
+              Operant AI
             </h2>
             <p className="text-sm mb-6 max-w-xs leading-relaxed" style={{ color: "#475569" }}>
               Your AI operations agent. Ask me to execute tasks, build workflows, or query your tools.

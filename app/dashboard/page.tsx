@@ -61,18 +61,18 @@ function DashboardInner() {
     loadProfile().then(setBusinessProfile);
 
     const handleStart = () => startOnboarding();
-    window.addEventListener("flowmind-start-onboarding", handleStart);
+    window.addEventListener("operant-start-onboarding", handleStart);
 
     const handleRun = (e: Event) => {
       const { prompt } = (e as CustomEvent<{ prompt: string }>).detail;
       handleSend(prompt);
       setPanelView("run");
     };
-    window.addEventListener("flowmind-run-workflow", handleRun);
+    window.addEventListener("operant-run-workflow", handleRun);
 
     return () => {
-      window.removeEventListener("flowmind-start-onboarding", handleStart);
-      window.removeEventListener("flowmind-run-workflow", handleRun);
+      window.removeEventListener("operant-start-onboarding", handleStart);
+      window.removeEventListener("operant-run-workflow", handleRun);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -129,7 +129,7 @@ function DashboardInner() {
                 if (event.type === "profile_saved") {
                   savedProfile = await saveProfile(event.profile);
                   setBusinessProfile(savedProfile);
-                  window.dispatchEvent(new CustomEvent("flowmind-profile-saved"));
+                  window.dispatchEvent(new CustomEvent("operant-profile-saved"));
                   isOnboardingRef.current = false;
                   setIsOnboarding(false);
                 }

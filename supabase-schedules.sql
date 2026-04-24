@@ -1,5 +1,5 @@
 -- ============================================================
--- FlowMind AI — Schedules migration
+-- Operant AI — Schedules migration
 -- Run this in the Supabase SQL editor
 -- ============================================================
 

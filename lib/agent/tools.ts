@@ -79,7 +79,7 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
         },
         from_name: {
           type: "string",
-          description: "Sender display name. Defaults to 'FlowMind AI'.",
+          description: "Sender display name. Defaults to 'Operant AI'.",
         },
         reply_to: {
           type: "string",

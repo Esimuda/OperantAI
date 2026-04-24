@@ -131,7 +131,7 @@ export function toZapierJson(workflow: WorkflowBlueprint): string {
     trigger,
     actions,
     setup_instructions: buildSetupInstructions(trigger, actions),
-    generated_by: "FlowMind AI",
+    generated_by: "Operant AI",
   };
 
   return JSON.stringify(output, null, 2);

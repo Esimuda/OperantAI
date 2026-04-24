@@ -56,7 +56,7 @@ export default function TopBar({ activeView, onViewChange, hasActiveRun, workspa
           </svg>
         </div>
         <span className="font-semibold tracking-tight text-[15px]" style={{ color: "#e2e8f0" }}>
-          FlowMind{" "}
+          Operant{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #7c3aed, #06b6d4)",

@@ -41,7 +41,7 @@ function buildSystemPrompt(config: IntegrationConfig, profile?: BusinessProfile 
 
   const businessContext = profile ? buildBusinessContext(profile) : "";
 
-  return `You are FlowMind AI — an intelligent operations agent built for automation and operations professionals.
+  return `You are Operant AI — an intelligent operations agent built for automation and operations professionals.
 ${businessContext}
 CONNECTED INTEGRATIONS (you may use these tools):
 ${connectedSection}

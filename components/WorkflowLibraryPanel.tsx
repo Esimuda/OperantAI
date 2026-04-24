@@ -245,7 +245,7 @@ function WorkflowCard({
       `Execute each step in order. Summarise results when done.`,
     ].filter((l) => l !== undefined).join("\n");
 
-    window.dispatchEvent(new CustomEvent("flowmind-run-workflow", { detail: { prompt } }));
+    window.dispatchEvent(new CustomEvent("operant-run-workflow", { detail: { prompt } }));
     setShowRun(false);
     setRunContext("");
   };
@@ -584,11 +584,11 @@ export default function WorkflowLibraryPanel() {
 
   useEffect(() => {
     refresh();
-    window.addEventListener("flowmind-workflow-saved", refresh);
-    window.addEventListener("flowmind-schedules-changed", refreshSchedules);
+    window.addEventListener("operant-workflow-saved", refresh);
+    window.addEventListener("operant-schedules-changed", refreshSchedules);
     return () => {
-      window.removeEventListener("flowmind-workflow-saved", refresh);
-      window.removeEventListener("flowmind-schedules-changed", refreshSchedules);
+      window.removeEventListener("operant-workflow-saved", refresh);
+      window.removeEventListener("operant-schedules-changed", refreshSchedules);
     };
   }, []);
 

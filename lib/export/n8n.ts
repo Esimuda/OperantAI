@@ -44,7 +44,7 @@ export function toN8nJson(workflow: WorkflowBlueprint): string {
     type: isTriggerWebhook ? "n8n-nodes-base.webhook" : "n8n-nodes-base.manualTrigger",
     typeVersion: 1,
     position: [100, 300],
-    parameters: isTriggerWebhook ? { path: "flowmind", httpMethod: "POST" } : {},
+    parameters: isTriggerWebhook ? { path: "operant", httpMethod: "POST" } : {},
   };
 
   const stepNodes = workflow.steps.map((s, i) => ({
@@ -77,8 +77,8 @@ export function toN8nJson(workflow: WorkflowBlueprint): string {
     active: false,
     settings: { executionOrder: "v1" },
     meta: {
-      instanceId: "flowmind-export",
-      templateId: "flowmind-ai",
+      instanceId: "operant-export",
+      templateId: "operant-ai",
     },
   };
 

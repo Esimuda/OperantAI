@@ -1,5 +1,5 @@
 -- ============================================================
--- FlowMind AI — complete Supabase schema
+-- Operant AI — complete Supabase schema
 -- Copy-paste the entire file into the Supabase SQL editor and run it.
 -- All statements are safe to re-run on an existing database.
 -- ============================================================

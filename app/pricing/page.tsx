@@ -8,7 +8,7 @@ const TIERS = [
     price: "Free",
     priceNote: "forever",
     priceId: null,
-    description: "Perfect for trying FlowMind AI and running simple automations.",
+    description: "Perfect for trying Operant AI and running simple automations.",
     highlight: false,
     features: [
       "50 agent runs / month",
@@ -43,7 +43,7 @@ const TIERS = [
     price: "$149",
     priceNote: "/ month",
     priceId: process.env.NEXT_PUBLIC_STRIPE_BUSINESS_PRICE_ID,
-    description: "For teams that run their entire operations layer on FlowMind AI.",
+    description: "For teams that run their entire operations layer on Operant AI.",
     highlight: false,
     features: [
       "Unlimited agent runs",
@@ -59,7 +59,7 @@ const TIERS = [
 ];
 
 const FAQ = [
-  { q: "What counts as an agent run?", a: "Each message you send to FlowMind AI that triggers the agent (tool calls, workflow execution) counts as one run. Conversational replies do not count." },
+  { q: "What counts as an agent run?", a: "Each message you send to Operant AI that triggers the agent (tool calls, workflow execution) counts as one run. Conversational replies do not count." },
   { q: "Can I upgrade or downgrade anytime?", a: "Yes. Upgrades take effect immediately; downgrades apply at the end of your billing period. You keep Pro features until then." },
   { q: "Is there a free trial for Pro?", a: "The Starter plan is always free with no time limit. We don't offer a Pro trial currently, but you can cancel anytime within the first billing period for a full refund." },
   { q: "What happens if I hit my run limit?", a: "The agent will notify you that your monthly limit has been reached and prompt you to upgrade. No charges are made automatically." },
@@ -79,7 +79,7 @@ export default function PricingPage() {
               <path d="M2 7h3M7 2v3M7 9v3M9 7h3M4.5 4.5l1.5 1.5M8 8l1.5 1.5M9.5 4.5L8 6M4.5 9.5L6 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <span className="font-semibold text-[15px]">FlowMind <span style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span></span>
+          <span className="font-semibold text-[15px]">Operant <span style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span></span>
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="text-sm" style={{ color: "#64748b" }}>Dashboard</Link>

@@ -85,7 +85,7 @@ export default function WorkspacesPage() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#06b6d4)", boxShadow: "0 0 12px rgba(124,58,237,0.4)" }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h3M7 2v3M7 9v3M9 7h3M4.5 4.5l1.5 1.5M8 8l1.5 1.5M9.5 4.5L8 6M4.5 9.5L6 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </div>
-          <span className="font-semibold text-[15px]">FlowMind <span style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span></span>
+          <span className="font-semibold text-[15px]">Operant <span style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span></span>
         </Link>
         <Link href="/dashboard" className="text-sm px-4 py-2 rounded-lg" style={{ color: "#64748b", border: "1px solid #1a1a2e" }}>← Dashboard</Link>
       </header>

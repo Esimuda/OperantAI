@@ -88,8 +88,8 @@ export default function RunHistoryPanel() {
 
   useEffect(() => {
     refresh();
-    window.addEventListener("flowmind-run-saved", refresh);
-    return () => window.removeEventListener("flowmind-run-saved", refresh);
+    window.addEventListener("operant-run-saved", refresh);
+    return () => window.removeEventListener("operant-run-saved", refresh);
   }, []);
 
   const handleClear = () => {

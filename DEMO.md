@@ -1,7 +1,7 @@
-# FlowMind AI — Live Demo Script
+# Operant AI — Live Demo Script
 
 ## Setup (do this before judges arrive)
-1. Open FlowMind at https://flowmind-ai.vercel.app
+1. Open Operant at https://operant-ai.vercel.app
 2. Click Dashboard tab in top right
 3. Have Notion database open in another tab
 4. Have your email inbox open in another tab
@@ -26,7 +26,7 @@
 
 ## Key Lines To Say
 - "Most automation tools make you drag and drop nodes manually"
-- "FlowMind converts plain English into live running workflows"
+- "Operant converts plain English into live running workflows"
 - "Watch this — I'll describe a workflow and it executes in real time"
 - "The workflow just ran. Notion updated. Email sent. Zero manual setup."
 

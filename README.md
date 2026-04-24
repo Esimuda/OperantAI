@@ -1,6 +1,6 @@
-# FlowMind AI
+# Operant AI
 
-An AI-powered workflow generator. Describe any business process in plain English and FlowMind AI instantly generates a structured automation workflow.
+An AI-powered workflow generator. Describe any business process in plain English and Operant AI instantly generates a structured automation workflow.
 
 ## Quick Start
 
@@ -33,7 +33,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## How It Works
 
 1. Type a business task in the chat panel (e.g. *"When a new Stripe payment arrives, email the customer and notify Slack"*)
-2. FlowMind AI sends your message to Claude and parses the structured workflow response
+2. Operant AI sends your message to Claude and parses the structured workflow response
 3. The right panel shows your workflow as numbered step cards
 4. Toggle **Code** to see the raw JSON · **Dashboard** for a stats overview
 

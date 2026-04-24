@@ -381,7 +381,7 @@ export default function AgentRunPanel({
         if (workflow) {
           savedIds.current.add(tc.id);
           saveWorkflow(workflow).then(() => {
-            window.dispatchEvent(new CustomEvent("flowmind-workflow-saved"));
+            window.dispatchEvent(new CustomEvent("operant-workflow-saved"));
           }).catch(console.error);
         }
       }

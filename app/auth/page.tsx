@@ -71,7 +71,7 @@ function AuthForm() {
             <span style={{ fontSize: 18 }}>⚡</span>
           </div>
           <p className="text-base font-semibold" style={{ color: "#e2e8f0" }}>
-            FlowMind AI
+            Operant AI
           </p>
           <p className="text-xs mt-1" style={{ color: "#475569" }}>
             Autonomous operations agent

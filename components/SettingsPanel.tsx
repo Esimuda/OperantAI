@@ -34,7 +34,7 @@ const FIELDS: Array<{
   { key: "mailchimpListId",    label: "Audience / List ID",   placeholder: "abc123def4", group: "Mailchimp" },
 ];
 
-const STORAGE_KEY = "flowmind_user_config";
+const STORAGE_KEY = "operant_user_config";
 
 // Reads from localStorage — used by ChatPanel to show connected status
 // and as a migration source when first upgrading to Supabase storage
@@ -171,7 +171,7 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
       // Also persist to localStorage so the app works if API is unreachable
       localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
       setSaved(true);
-      window.dispatchEvent(new CustomEvent("flowmind-config-saved"));
+      window.dispatchEvent(new CustomEvent("operant-config-saved"));
       setTimeout(() => setSaved(false), 2000);
     } catch {
       // Fallback: at least save locally
@@ -206,7 +206,7 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
             <p className="text-[11px] mb-3 leading-relaxed" style={{ color: "#475569" }}>{businessProfile.description}</p>
             <div className="flex gap-2">
               <button
-                onClick={() => window.dispatchEvent(new CustomEvent("flowmind-start-onboarding"))}
+                onClick={() => window.dispatchEvent(new CustomEvent("operant-start-onboarding"))}
                 className="flex-1 py-2 rounded-lg text-[11px] font-medium transition-all"
                 style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.18)")}
@@ -215,7 +215,7 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
                 Re-run Setup
               </button>
               <button
-                onClick={() => { clearProfile(); window.dispatchEvent(new CustomEvent("flowmind-profile-saved")); window.location.reload(); }}
+                onClick={() => { clearProfile(); window.dispatchEvent(new CustomEvent("operant-profile-saved")); window.location.reload(); }}
                 className="px-3 py-2 rounded-lg text-[11px] transition-all"
                 style={{ color: "#334155", border: "1px solid #1a1a2e" }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
@@ -231,7 +231,7 @@ export default function SettingsPanel({ businessProfile }: { businessProfile?: B
               No profile yet. Set one up so the agent knows your business.
             </p>
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent("flowmind-start-onboarding"))}
+              onClick={() => window.dispatchEvent(new CustomEvent("operant-start-onboarding"))}
               className="w-full py-2.5 rounded-lg text-xs font-semibold transition-all"
               style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", color: "#fff", boxShadow: "0 0 16px rgba(124,58,237,0.25)" }}
             >

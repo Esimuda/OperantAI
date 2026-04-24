@@ -5,7 +5,7 @@ export async function sendEmail(
   to: string,
   subject: string,
   bodyHtml: string,
-  fromName = "FlowMind AI",
+  fromName = "Operant AI",
   replyTo?: string
 ): Promise<string> {
   const resend = new Resend(apiKey);

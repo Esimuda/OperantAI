@@ -52,7 +52,7 @@ export default function AcceptInvitePage({ params }: { params: { token: string }
         <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#06b6d4)", boxShadow: "0 0 16px rgba(124,58,237,0.4)" }}>
           <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M2 7h3M7 2v3M7 9v3M9 7h3M4.5 4.5l1.5 1.5M8 8l1.5 1.5M9.5 4.5L8 6M4.5 9.5L6 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </div>
-        <span className="font-semibold text-lg">FlowMind <span style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span></span>
+        <span className="font-semibold text-lg">Operant <span style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span></span>
       </div>
 
       <div className="w-full max-w-sm rounded-2xl p-8" style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}>

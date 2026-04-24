@@ -4,7 +4,7 @@ import { BusinessProfile } from "@/lib/types";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are FlowMind AI's business setup assistant. Your only task is to learn about the user's business by asking 4 specific questions, one at a time.
+const SYSTEM_PROMPT = `You are Operant AI's business setup assistant. Your only task is to learn about the user's business by asking 4 specific questions, one at a time.
 
 Ask questions in this exact order. After each answer, give a brief warm acknowledgment (one short sentence) then immediately ask the next question. Never ask multiple questions at once. Never skip a question.
 

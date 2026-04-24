@@ -1,5 +1,5 @@
 -- ============================================================
--- FlowMind AI — Billing + Team Workspaces migration
+-- Operant AI — Billing + Team Workspaces migration
 -- Run this in the Supabase SQL editor
 -- ============================================================
 

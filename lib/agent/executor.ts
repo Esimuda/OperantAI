@@ -84,7 +84,7 @@ async function dispatch(
         input.to as string,
         input.subject as string,
         input.body_html as string,
-        (input.from_name as string | undefined) ?? "FlowMind AI",
+        (input.from_name as string | undefined) ?? "Operant AI",
         input.reply_to as string | undefined
       );
     }

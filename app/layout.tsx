@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FlowMind AI — AI-Powered Workflow Generator",
+  title: "Operant AI — AI-Powered Workflow Generator",
   description:
-    "Describe any business process in plain English and FlowMind AI will instantly generate an automated workflow for you.",
+    "Describe any business process in plain English and Operant AI will instantly generate an automated workflow for you.",
 };
 
 export const viewport: Viewport = {

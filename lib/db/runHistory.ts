@@ -26,7 +26,7 @@ export async function persistRun(run: AgentRun): Promise<void> {
     await supabase.from("run_history").delete().in("id", toDelete).eq("user_id", user.id);
   }
 
-  window.dispatchEvent(new CustomEvent("flowmind-run-saved"));
+  window.dispatchEvent(new CustomEvent("operant-run-saved"));
 }
 
 export async function listRunHistory(): Promise<AgentRun[]> {
@@ -50,5 +50,5 @@ export async function clearRunHistory(): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   await supabase.from("run_history").delete().eq("user_id", user.id);
-  window.dispatchEvent(new CustomEvent("flowmind-run-saved"));
+  window.dispatchEvent(new CustomEvent("operant-run-saved"));
 }

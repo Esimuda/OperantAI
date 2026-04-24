@@ -1,8 +1,8 @@
-# FlowMind AI — CLAUDE.md
+# Operant AI — CLAUDE.md
 
 ## Product Vision
 
-FlowMind AI is an AI agent platform for automation specialists (and businesses without one).
+Operant AI is an AI agent platform for automation specialists (and businesses without one).
 
 - **With a specialist**: the AI co-pilots workflow creation — specialist describes what they want, AI builds it, exports it to Zapier/n8n/Make.com
 - **Without a specialist**: the AI runs the entire operations layer autonomously — connecting APIs, building workflows, executing and monitoring them
