@@ -12,6 +12,11 @@ export async function middleware(request: NextRequest) {
   );
   if (isPublic) return NextResponse.next({ request });
 
+  // If Supabase env vars are not set, allow through (avoids blank page on misconfigured deploy)
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
