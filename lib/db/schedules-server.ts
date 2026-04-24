@@ -9,6 +9,30 @@ const FREQ_MS: Record<ScheduleFrequency, number> = {
   weekly:  604_800_000,
 };
 
+function calculateNextRunAt(frequency: ScheduleFrequency, runHour?: number): string {
+  if (frequency === "hourly" || runHour === undefined) {
+    return new Date(Date.now() + FREQ_MS[frequency]).toISOString();
+  }
+  const now = new Date();
+  const next = new Date(now);
+  next.setUTCMinutes(0, 0, 0);
+  next.setUTCHours(runHour);
+  if (next.getTime() <= now.getTime()) {
+    next.setUTCDate(next.getUTCDate() + (frequency === "daily" ? 1 : 7));
+  }
+  return next.toISOString();
+}
+
+// Drift-free: advance from the previously scheduled time, not from now
+function advanceNextRunAt(prevNextRunAt: string, frequency: ScheduleFrequency, runHour?: number): string {
+  if (frequency === "hourly" || runHour === undefined) {
+    return new Date(Date.now() + FREQ_MS[frequency]).toISOString();
+  }
+  const prev = new Date(prevNextRunAt);
+  prev.setUTCDate(prev.getUTCDate() + (frequency === "daily" ? 1 : 7));
+  return prev.toISOString();
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToSchedule(row: Record<string, any>): ScheduledWorkflow {
   return {
@@ -16,6 +40,7 @@ function rowToSchedule(row: Record<string, any>): ScheduledWorkflow {
     workflowId:  row.workflow_id as string,
     blueprint:   row.blueprint as WorkflowBlueprint,
     frequency:   row.frequency as ScheduleFrequency,
+    runHour:     row.run_hour != null ? (row.run_hour as number) : undefined,
     enabled:     row.enabled as boolean,
     lastRunAt:   row.last_run_at ? new Date(row.last_run_at as string).getTime() : undefined,
     nextRunAt:   new Date(row.next_run_at as string).getTime(),
@@ -39,10 +64,11 @@ export async function createScheduleDB(
   userId: string,
   workflowId: string,
   blueprint: WorkflowBlueprint,
-  frequency: ScheduleFrequency
+  frequency: ScheduleFrequency,
+  runHour?: number
 ): Promise<ScheduledWorkflow> {
   const supabase = await createClient();
-  const nextRunAt = new Date(Date.now() + FREQ_MS[frequency]).toISOString();
+  const nextRunAt = calculateNextRunAt(frequency, runHour);
   const { data, error } = await supabase
     .from("schedules")
     .upsert(
@@ -52,6 +78,7 @@ export async function createScheduleDB(
         workflow_name: blueprint.name,
         blueprint,
         frequency,
+        run_hour:      runHour ?? null,
         enabled:       true,
         next_run_at:   nextRunAt,
       },
@@ -65,14 +92,15 @@ export async function createScheduleDB(
 
 export async function updateScheduleDB(
   id: string,
-  patch: { enabled?: boolean; frequency?: ScheduleFrequency }
+  patch: { enabled?: boolean; frequency?: ScheduleFrequency; runHour?: number }
 ): Promise<void> {
   const supabase = await createClient();
   const updates: Record<string, unknown> = {};
   if (patch.enabled !== undefined) updates.enabled = patch.enabled;
   if (patch.frequency) {
     updates.frequency   = patch.frequency;
-    updates.next_run_at = new Date(Date.now() + FREQ_MS[patch.frequency]).toISOString();
+    updates.run_hour    = patch.runHour ?? null;
+    updates.next_run_at = calculateNextRunAt(patch.frequency, patch.runHour);
   }
   await supabase.from("schedules").update(updates).eq("id", id);
 }
@@ -102,21 +130,28 @@ export interface DueScheduleRow {
   workflow_name: string;
   blueprint:     WorkflowBlueprint;
   frequency:     ScheduleFrequency;
+  run_hour:      number | null;
+  next_run_at:   string;
 }
 
 export async function getDueSchedulesAdmin(): Promise<DueScheduleRow[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("schedules")
-    .select("id, user_id, workflow_id, workflow_name, blueprint, frequency")
+    .select("id, user_id, workflow_id, workflow_name, blueprint, frequency, run_hour, next_run_at")
     .eq("enabled", true)
     .lte("next_run_at", new Date().toISOString());
   return (data ?? []) as DueScheduleRow[];
 }
 
-export async function markScheduleRanAdmin(id: string, frequency: ScheduleFrequency): Promise<void> {
+export async function markScheduleRanAdmin(
+  id: string,
+  frequency: ScheduleFrequency,
+  runHour: number | null,
+  prevNextRunAt: string
+): Promise<void> {
   const admin = createAdminClient();
-  const nextRunAt = new Date(Date.now() + FREQ_MS[frequency]).toISOString();
+  const nextRunAt = advanceNextRunAt(prevNextRunAt, frequency, runHour ?? undefined);
   await admin
     .from("schedules")
     .update({ last_run_at: new Date().toISOString(), next_run_at: nextRunAt })

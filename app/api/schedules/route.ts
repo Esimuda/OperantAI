@@ -18,12 +18,13 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { workflowId, blueprint, frequency } = await req.json() as {
+  const { workflowId, blueprint, frequency, runHour } = await req.json() as {
     workflowId: string;
     blueprint: WorkflowBlueprint;
     frequency: ScheduleFrequency;
+    runHour?: number;
   };
 
-  const schedule = await createScheduleDB(user.id, workflowId, blueprint, frequency);
+  const schedule = await createScheduleDB(user.id, workflowId, blueprint, frequency, runHour);
   return NextResponse.json(schedule);
 }

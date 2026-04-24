@@ -7,6 +7,7 @@ export interface ScheduledWorkflow {
   workflowId: string;
   blueprint: WorkflowBlueprint;
   frequency: ScheduleFrequency;
+  runHour?: number;
   enabled: boolean;
   lastRunAt?: number;
   nextRunAt: number;
@@ -18,12 +19,13 @@ export interface ScheduledWorkflow {
 export async function createSchedule(
   workflowId: string,
   blueprint: WorkflowBlueprint,
-  frequency: ScheduleFrequency
+  frequency: ScheduleFrequency,
+  runHour?: number
 ): Promise<ScheduledWorkflow> {
   const res = await fetch("/api/schedules", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ workflowId, blueprint, frequency }),
+    body: JSON.stringify({ workflowId, blueprint, frequency, runHour }),
   });
   if (!res.ok) throw new Error("Failed to create schedule");
   return res.json() as Promise<ScheduledWorkflow>;
@@ -54,8 +56,13 @@ export async function getScheduleForWorkflow(workflowId: string): Promise<Schedu
 
 // ── Display utilities ────────────────────────────────────────────────────────
 
-export function freqLabel(f: ScheduleFrequency): string {
-  return { hourly: "Every hour", daily: "Every day", weekly: "Every week" }[f];
+export function freqLabel(f: ScheduleFrequency, runHour?: number): string {
+  if (f === "hourly" || runHour === undefined) {
+    return { hourly: "Every hour", daily: "Every day", weekly: "Every week" }[f];
+  }
+  const h = runHour % 12 || 12;
+  const ampm = runHour < 12 ? "AM" : "PM";
+  return { daily: `Daily at ${h}:00 ${ampm}`, weekly: `Weekly at ${h}:00 ${ampm}` }[f] ?? "Every day";
 }
 
 export function nextRunLabel(nextRunAt: number): string {
@@ -67,4 +74,11 @@ export function nextRunLabel(nextRunAt: number): string {
   if (mins  < 60) return `in ${mins}m`;
   if (hours < 24) return `in ${hours}h`;
   return `in ${days}d`;
+}
+
+export function hourLabel(h: number): string {
+  if (h === 0)  return "12:00 AM";
+  if (h < 12)  return `${h}:00 AM`;
+  if (h === 12) return "12:00 PM";
+  return `${h - 12}:00 PM`;
 }

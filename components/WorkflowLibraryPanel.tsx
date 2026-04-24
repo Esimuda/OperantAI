@@ -14,6 +14,7 @@ import {
   getScheduleForWorkflow,
   freqLabel,
   nextRunLabel,
+  hourLabel,
 } from "@/lib/db/schedules";
 
 const TEMPLATES: WorkflowBlueprint[] = [
@@ -167,6 +168,9 @@ function WorkflowCard({
   const [expanded, setExpanded] = useState(false);
   const [showRun, setShowRun] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [schedStep, setSchedStep] = useState<"freq" | "time">("freq");
+  const [pendingFreq, setPendingFreq] = useState<ScheduleFrequency>("daily");
+  const [schedHour, setSchedHour] = useState(9);
   const [showWebhook, setShowWebhook] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
   const [webhookLoading, setWebhookLoading] = useState(false);
@@ -208,11 +212,12 @@ function WorkflowCard({
 
   const refreshSchedule = () => getScheduleForWorkflow(saved.id).then(setSchedule);
 
-  const handleSchedule = async (freq: ScheduleFrequency) => {
-    await createSchedule(saved.id, blueprint, freq);
+  const handleSchedule = async (freq: ScheduleFrequency, runHour?: number) => {
+    await createSchedule(saved.id, blueprint, freq, runHour);
     refreshSchedule();
     onScheduleChange();
     setShowSchedule(false);
+    setSchedStep("freq");
   };
 
   const handleToggleSchedule = () => {
@@ -280,7 +285,7 @@ function WorkflowCard({
           {schedule && (
             <button
               onClick={(e) => { e.stopPropagation(); handleToggleSchedule(); }}
-              title={schedule.enabled ? `${freqLabel(schedule.frequency)} · next ${nextRunLabel(schedule.nextRunAt)}` : "Paused"}
+              title={schedule.enabled ? `${freqLabel(schedule.frequency, schedule.runHour)} · next ${nextRunLabel(schedule.nextRunAt)}` : "Paused"}
               className="text-[10px] px-2 py-0.5 rounded-full transition-all"
               style={
                 schedule.enabled
@@ -427,7 +432,7 @@ function WorkflowCard({
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <span className="text-[10px] font-semibold" style={{ color: schedule.enabled ? "#06b6d4" : "#475569" }}>
-                    {schedule.enabled ? `⏰ ${freqLabel(schedule.frequency)}` : `⏸ Paused (${freqLabel(schedule.frequency)})`}
+                    {schedule.enabled ? `⏰ ${freqLabel(schedule.frequency, schedule.runHour)}` : `⏸ Paused (${freqLabel(schedule.frequency, schedule.runHour)})`}
                   </span>
                   {schedule.enabled && (
                     <span className="text-[10px] ml-2" style={{ color: "#334155" }}>
@@ -465,7 +470,7 @@ function WorkflowCard({
               <div>
                 {!showSchedule ? (
                   <button
-                    onClick={() => setShowSchedule(true)}
+                    onClick={() => { setShowSchedule(true); setSchedStep("freq"); }}
                     className="text-[10px] flex items-center gap-1.5 transition-all"
                     style={{ color: "#334155" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#06b6d4")}
@@ -473,7 +478,7 @@ function WorkflowCard({
                   >
                     <span>⏰</span> Schedule this workflow
                   </button>
-                ) : (
+                ) : schedStep === "freq" ? (
                   <div>
                     <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "#334155" }}>
                       Run automatically
@@ -482,8 +487,11 @@ function WorkflowCard({
                       {(["hourly", "daily", "weekly"] as ScheduleFrequency[]).map((f) => (
                         <button
                           key={f}
-                          onClick={() => handleSchedule(f)}
-                          className="text-[11px] px-3 py-1.5 rounded-lg transition-all capitalize"
+                          onClick={() => {
+                            setPendingFreq(f);
+                            if (f === "hourly") { handleSchedule(f); } else { setSchedStep("time"); }
+                          }}
+                          className="text-[11px] px-3 py-1.5 rounded-lg transition-all"
                           style={{ background: "rgba(6,182,212,0.08)", color: "#06b6d4", border: "1px solid rgba(6,182,212,0.2)" }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.16)")}
                           onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.08)")}
@@ -497,6 +505,40 @@ function WorkflowCard({
                         style={{ color: "#334155" }}
                       >
                         Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "#334155" }}>
+                      {pendingFreq === "daily" ? "Daily at" : "Weekly at"}
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        value={schedHour}
+                        onChange={(e) => setSchedHour(Number(e.target.value))}
+                        className="text-[11px] px-2 py-1.5 rounded-lg"
+                        style={{ background: "#0d0d12", color: "#e2e8f0", border: "1px solid #1a1a2e" }}
+                      >
+                        {Array.from({ length: 24 }, (_, h) => (
+                          <option key={h} value={h}>{hourLabel(h)}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleSchedule(pendingFreq, schedHour)}
+                        className="text-[11px] px-3 py-1.5 rounded-lg font-semibold transition-all"
+                        style={{ background: "rgba(6,182,212,0.08)", color: "#06b6d4", border: "1px solid rgba(6,182,212,0.2)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.16)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.08)")}
+                      >
+                        Set schedule
+                      </button>
+                      <button
+                        onClick={() => setSchedStep("freq")}
+                        className="text-[11px] px-2 py-1.5 rounded-lg"
+                        style={{ color: "#334155" }}
+                      >
+                        Back
                       </button>
                     </div>
                   </div>

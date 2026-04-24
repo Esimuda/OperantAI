@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AgentRun, AgentStage, ExecutionObservation, ReflectionResult } from "@/lib/types";
 import ToolCallCard from "./ToolCallCard";
 import { toN8nJson, toMakeJson, WorkflowBlueprint } from "@/lib/export/n8n";
 import { toZapierJson } from "@/lib/export/zapier";
 import { saveWorkflow } from "@/lib/db/workflows";
+import { createSchedule, freqLabel, hourLabel, ScheduleFrequency } from "@/lib/db/schedules";
 
 function downloadJson(filename: string, content: string) {
   const blob = new Blob([content], { type: "application/json" });
@@ -45,6 +46,130 @@ function ExportButtons({ workflow }: { workflow: WorkflowBlueprint }) {
             {label}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+const HOURS = Array.from({ length: 24 }, (_, h) => h);
+
+function ScheduleSection({ workflow }: { workflow: WorkflowBlueprint }) {
+  const [step, setStep] = useState<"idle" | "freq" | "time" | "saved">("idle");
+  const [freq, setFreq] = useState<ScheduleFrequency>("daily");
+  const [hour, setHour] = useState(9);
+  const [saving, setSaving] = useState(false);
+
+  async function save(f: ScheduleFrequency, h?: number) {
+    setSaving(true);
+    try {
+      const workflowId = workflow.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      await createSchedule(workflowId, workflow, f, h);
+      setStep("saved");
+    } catch {
+      setSaving(false);
+    }
+  }
+
+  if (step === "saved") {
+    return (
+      <div
+        className="rounded-xl px-3 py-2 mt-2 flex items-center gap-2"
+        style={{ background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.2)" }}
+      >
+        <span className="text-[11px]" style={{ color: "#06b6d4" }}>⏰</span>
+        <span className="text-[11px] font-semibold" style={{ color: "#06b6d4" }}>
+          Scheduled — {freqLabel(freq, freq === "hourly" ? undefined : hour)}
+        </span>
+      </div>
+    );
+  }
+
+  if (step === "idle") {
+    return (
+      <button
+        onClick={() => setStep("freq")}
+        className="mt-2 text-[11px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all"
+        style={{ background: "rgba(6,182,212,0.06)", color: "#475569", border: "1px solid rgba(6,182,212,0.15)" }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "#06b6d4"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "#475569"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.15)"; }}
+      >
+        ⏰ Schedule this workflow
+      </button>
+    );
+  }
+
+  if (step === "freq") {
+    return (
+      <div
+        className="rounded-xl p-3 mt-2"
+        style={{ background: "rgba(6,182,212,0.05)", border: "1px solid rgba(6,182,212,0.18)" }}
+      >
+        <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "#334155" }}>Run automatically</p>
+        <div className="flex gap-2 flex-wrap">
+          {(["hourly", "daily", "weekly"] as ScheduleFrequency[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => {
+                setFreq(f);
+                if (f === "hourly") { save(f); } else { setStep("time"); }
+              }}
+              className="text-[11px] px-3 py-1.5 rounded-lg transition-all"
+              style={{ background: "rgba(6,182,212,0.08)", color: "#06b6d4", border: "1px solid rgba(6,182,212,0.2)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.16)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.08)")}
+            >
+              {freqLabel(f)}
+            </button>
+          ))}
+          <button
+            onClick={() => setStep("idle")}
+            className="text-[11px] px-2 py-1.5 rounded-lg"
+            style={{ color: "#334155" }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // step === "time"
+  return (
+    <div
+      className="rounded-xl p-3 mt-2"
+      style={{ background: "rgba(6,182,212,0.05)", border: "1px solid rgba(6,182,212,0.18)" }}
+    >
+      <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "#334155" }}>
+        {freq === "daily" ? "Daily at" : "Weekly at"}
+      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <select
+          value={hour}
+          onChange={(e) => setHour(Number(e.target.value))}
+          className="text-[11px] px-2 py-1.5 rounded-lg"
+          style={{ background: "#0d0d12", color: "#e2e8f0", border: "1px solid #1a1a2e" }}
+        >
+          {HOURS.map((h) => (
+            <option key={h} value={h}>{hourLabel(h)}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => save(freq, hour)}
+          disabled={saving}
+          className="text-[11px] px-3 py-1.5 rounded-lg font-semibold transition-all"
+          style={{ background: "rgba(6,182,212,0.12)", color: "#06b6d4", border: "1px solid rgba(6,182,212,0.25)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.2)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.12)")}
+        >
+          {saving ? "Saving…" : "Set schedule"}
+        </button>
+        <button
+          onClick={() => setStep("freq")}
+          className="text-[11px] px-2 py-1.5 rounded-lg"
+          style={{ color: "#334155" }}
+        >
+          Back
+        </button>
       </div>
     </div>
   );
@@ -313,7 +438,12 @@ export default function AgentRunPanel({
           return (
             <div key={tc.id}>
               <ToolCallCard tc={tc} />
-              {workflow && <ExportButtons workflow={workflow} />}
+              {workflow && (
+                <>
+                  <ExportButtons workflow={workflow} />
+                  <ScheduleSection workflow={workflow} />
+                </>
+              )}
             </div>
           );
         })

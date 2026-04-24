@@ -116,7 +116,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       // Always advance the schedule's next_run_at so it doesn't retrigger immediately
-      await markScheduleRanAdmin(schedule.id, schedule.frequency);
+      await markScheduleRanAdmin(schedule.id, schedule.frequency, schedule.run_hour, schedule.next_run_at);
     })
   );
 
