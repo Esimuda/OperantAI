@@ -2,32 +2,32 @@ import Link from "next/link";
 
 const FEATURES = [
   {
-    icon: "⚡",
+    icon: "→",
     title: "Goal-driven automation",
     body: "Describe what you want in plain language. Operant interprets intent, plans steps, selects tools, and executes — no configuration required.",
   },
   {
-    icon: "🔁",
+    icon: "↺",
     title: "Self-healing workflows",
     body: "When a step fails, the Reflection engine diagnoses the cause, patches the workflow, and retries automatically — up to twice per run.",
   },
   {
-    icon: "🧠",
+    icon: "◎",
     title: "Learns over time",
     body: "Every failure pattern is stored in long-term memory. The agent applies past fixes to future runs without being told.",
   },
   {
-    icon: "🔌",
-    title: "9 integrations out of the box",
-    body: "Notion, Gmail, Slack, Stripe, HubSpot, Airtable, Google Sheets, Google Calendar, Resend — connect once, use everywhere.",
+    icon: "⊞",
+    title: "15 integrations out of the box",
+    body: "Notion, Gmail, Slack, Stripe, HubSpot, Airtable, Google Sheets, Calendar, Twilio, GitHub, Linear, Discord, Resend, Mailchimp, Meta.",
   },
   {
-    icon: "📤",
+    icon: "↗",
     title: "Export to any platform",
-    body: "Every workflow can be exported as n8n JSON, Make.com scenario, or Zapier Zap — so you own your automations.",
+    body: "Every workflow can be exported as n8n JSON, Make.com scenario, or Zapier guide — so you own your automations.",
   },
   {
-    icon: "🔒",
+    icon: "◻",
     title: "Fully isolated per account",
     body: "Your workflows, API keys, and memory are scoped to your account with row-level security. No shared data.",
   },
@@ -40,15 +40,9 @@ const STEPS = [
 ];
 
 const INTEGRATIONS = [
-  { name: "Notion", icon: "📝", color: "rgba(255,255,255,0.06)" },
-  { name: "Gmail", icon: "📧", color: "rgba(234,67,53,0.08)" },
-  { name: "Slack", icon: "💬", color: "rgba(74,21,75,0.1)" },
-  { name: "Stripe", icon: "💳", color: "rgba(99,91,255,0.08)" },
-  { name: "HubSpot", icon: "🔶", color: "rgba(255,122,0,0.08)" },
-  { name: "Airtable", icon: "🗃️", color: "rgba(255,184,0,0.08)" },
-  { name: "Google Sheets", icon: "📊", color: "rgba(52,168,83,0.08)" },
-  { name: "Google Calendar", icon: "📅", color: "rgba(26,115,232,0.08)" },
-  { name: "Resend", icon: "✉️", color: "rgba(255,255,255,0.06)" },
+  "Notion", "Gmail", "Slack", "Stripe", "HubSpot",
+  "Airtable", "Google Sheets", "Google Calendar",
+  "Twilio", "GitHub", "Linear", "Discord", "Resend", "Mailchimp", "Meta",
 ];
 
 const USE_CASES = [
@@ -73,7 +67,6 @@ const USE_CASES = [
 const PERSONAS = [
   {
     tag: "For automation specialists",
-    icon: "🛠️",
     title: "Build 10× faster with an AI co-pilot",
     points: [
       "Describe the workflow — Operant drafts it instantly",
@@ -84,7 +77,6 @@ const PERSONAS = [
   },
   {
     tag: "For businesses without a specialist",
-    icon: "🏢",
     title: "Run your entire ops layer autonomously",
     points: [
       "No Zapier expertise or developer needed",
@@ -96,7 +88,7 @@ const PERSONAS = [
 ];
 
 const STATS = [
-  { value: "9", label: "native integrations" },
+  { value: "15", label: "native integrations" },
   { value: "< 2 min", label: "to first automation" },
   { value: "10×", label: "faster than manual setup" },
   { value: "0", label: "config files required" },
@@ -104,36 +96,40 @@ const STATS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen" style={{ background: "#050508", color: "#e2e8f0" }}>
+    <div className="min-h-screen" style={{ background: "var(--background)", color: "var(--foreground)" }}>
 
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}
-          >
-            <span style={{ fontSize: 14 }}>⚡</span>
+      <nav
+        className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 max-w-6xl mx-auto"
+        style={{ background: "var(--background)", borderBottom: "1px solid var(--border-subtle)" }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--accent)" }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7h3M7 2v3M7 9v3M9 7h3M4.5 4.5l1.5 1.5M8 8l1.5 1.5M9.5 4.5L8 6M4.5 9.5L6 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
           </div>
-          <span className="text-sm font-semibold" style={{ color: "#e2e8f0" }}>Operant AI</span>
+          <span className="text-sm font-semibold">Operant <span style={{ color: "var(--accent)" }}>AI</span></span>
         </div>
-        <div className="hidden md:flex items-center gap-6 text-sm" style={{ color: "#475569" }}>
-          <a href="#how-it-works" className="hover:text-slate-300 transition-colors">How it works</a>
-          <a href="#integrations" className="hover:text-slate-300 transition-colors">Integrations</a>
-          <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
+
+        <div className="hidden md:flex items-center gap-6 text-sm" style={{ color: "var(--foreground-3)" }}>
+          <a href="#how-it-works" className="transition-colors hover:text-[var(--foreground-2)]">How it works</a>
+          <a href="#integrations" className="transition-colors hover:text-[var(--foreground-2)]">Integrations</a>
+          <Link href="/pricing" className="transition-colors hover:text-[var(--foreground-2)]">Pricing</Link>
         </div>
+
         <div className="flex items-center gap-3">
           <Link
             href="/auth"
             className="text-sm px-4 py-1.5 rounded-lg transition-all"
-            style={{ color: "#94a3b8" }}
+            style={{ color: "var(--foreground-2)" }}
           >
             Sign in
           </Link>
           <Link
             href="/auth?mode=signup"
-            className="text-sm px-4 py-2 rounded-lg font-medium transition-all"
-            style={{ background: "rgba(124,58,237,0.85)", color: "#fff", border: "1px solid rgba(124,58,237,0.4)" }}
+            className="text-sm px-4 py-2 rounded-lg font-semibold transition-all"
+            style={{ background: "var(--accent)", color: "#fff" }}
           >
             Get started free
           </Link>
@@ -141,27 +137,25 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="text-center px-6 pt-20 pb-16 max-w-4xl mx-auto">
+      <section className="text-center px-6 pt-24 pb-16 max-w-4xl mx-auto">
         <div
-          className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full mb-8"
-          style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa" }}
+          className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full mb-8 font-medium"
+          style={{ background: "var(--accent-glow)", border: "1px solid rgba(218,119,86,0.3)", color: "var(--accent)" }}
         >
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#7c3aed" }} />
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--accent)" }} />
           Autonomous Operations Agent
         </div>
 
-        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6" style={{ color: "#f1f5f9" }}>
+        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6" style={{ color: "var(--foreground)" }}>
           The AI that runs your{" "}
-          <span style={{ background: "linear-gradient(135deg, #7c3aed, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            entire operations layer
-          </span>
+          <span style={{ color: "var(--accent)" }}>entire operations layer</span>
         </h1>
 
-        <p className="text-lg mb-4 max-w-2xl mx-auto leading-relaxed" style={{ color: "#94a3b8" }}>
+        <p className="text-lg mb-4 max-w-2xl mx-auto leading-relaxed" style={{ color: "var(--foreground-2)" }}>
           Operant AI is an automation agent that builds, runs, and self-heals your business workflows.
           Describe your goal in plain English — Operant plans the steps, executes across your tools, and fixes itself when things go wrong.
         </p>
-        <p className="text-sm mb-10 max-w-xl mx-auto" style={{ color: "#475569" }}>
+        <p className="text-sm mb-10 max-w-xl mx-auto" style={{ color: "var(--foreground-3)" }}>
           No drag-and-drop. No YAML. No Zapier expertise required.
         </p>
 
@@ -169,16 +163,16 @@ export default function LandingPage() {
           <Link
             href="/auth?mode=signup"
             className="px-8 py-3 rounded-xl text-sm font-semibold transition-all"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", color: "#fff", boxShadow: "0 0 32px rgba(124,58,237,0.35)" }}
+            style={{ background: "var(--accent)", color: "#fff" }}
           >
             Start automating free
           </Link>
           <Link
-            href="/pricing"
+            href="/demo"
             className="px-8 py-3 rounded-xl text-sm font-medium transition-all"
-            style={{ background: "rgba(255,255,255,0.04)", color: "#94a3b8", border: "1px solid #1a1a2e" }}
+            style={{ background: "var(--surface)", color: "var(--foreground-2)", border: "1px solid var(--border)" }}
           >
-            See pricing
+            Watch the demo →
           </Link>
         </div>
       </section>
@@ -190,10 +184,10 @@ export default function LandingPage() {
             <div
               key={s.label}
               className="rounded-2xl p-5 text-center"
-              style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              <div className="text-2xl font-bold mb-1" style={{ color: "#a78bfa" }}>{s.value}</div>
-              <div className="text-xs" style={{ color: "#475569" }}>{s.label}</div>
+              <div className="text-2xl font-bold mb-1" style={{ color: "var(--accent)" }}>{s.value}</div>
+              <div className="text-xs" style={{ color: "var(--foreground-3)" }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -203,48 +197,47 @@ export default function LandingPage() {
       <section className="px-6 py-16 max-w-4xl mx-auto">
         <div
           className="rounded-2xl p-8 md:p-10"
-          style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         >
-          <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "#334155" }}>The problem</p>
-          <h2 className="text-2xl md:text-3xl font-bold mb-4" style={{ color: "#f1f5f9" }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--foreground-3)" }}>The problem</p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
             Automation tools are built for developers.<br />
-            <span style={{ color: "#64748b" }}>Your business isn't.</span>
+            <span style={{ color: "var(--foreground-2)" }}>Your business isn&apos;t.</span>
           </h2>
-          <p className="text-sm leading-relaxed mb-4" style={{ color: "#64748b" }}>
+          <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--foreground-2)" }}>
             Zapier, Make.com, and n8n are powerful — but they require you to know exactly which triggers, actions, and filters to wire together.
             That knowledge takes months to build. Most businesses either hire a specialist or give up entirely.
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: "#64748b" }}>
-            Operant AI removes that barrier. Instead of building workflows step-by-step, you describe the outcome. The agent figures out the rest —
-            and keeps it running, even when APIs break, rate limits hit, or data formats change.
+          <p className="text-sm leading-relaxed" style={{ color: "var(--foreground-2)" }}>
+            Operant AI removes that barrier. Describe the outcome — the agent figures out the rest,
+            and keeps it running even when APIs break, rate limits hit, or data formats change.
           </p>
         </div>
       </section>
 
       {/* Who it's for */}
       <section className="px-6 py-16 max-w-4xl mx-auto">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "#334155" }}>
-          Who it's for
+        <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "var(--foreground-3)" }}>
+          Who it&apos;s for
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {PERSONAS.map((p) => (
             <div
               key={p.tag}
               className="rounded-2xl p-6"
-              style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <div
-                className="inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-full mb-4"
-                style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", color: "#a78bfa" }}
+                className="inline-flex items-center text-xs px-2.5 py-1 rounded-full mb-4 font-medium"
+                style={{ background: "var(--accent-glow)", border: "1px solid rgba(218,119,86,0.25)", color: "var(--accent)" }}
               >
-                <span>{p.icon}</span>
                 {p.tag}
               </div>
-              <h3 className="text-base font-semibold mb-4" style={{ color: "#e2e8f0" }}>{p.title}</h3>
+              <h3 className="text-base font-semibold mb-4">{p.title}</h3>
               <ul className="space-y-2.5">
                 {p.points.map((point) => (
-                  <li key={point} className="flex items-start gap-2.5 text-sm" style={{ color: "#64748b" }}>
-                    <span className="mt-0.5 text-xs" style={{ color: "#7c3aed" }}>✓</span>
+                  <li key={point} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--foreground-2)" }}>
+                    <span className="mt-0.5 flex-shrink-0" style={{ color: "var(--accent)" }}>✓</span>
                     {point}
                   </li>
                 ))}
@@ -256,10 +249,10 @@ export default function LandingPage() {
 
       {/* Use cases */}
       <section className="px-6 py-16 max-w-4xl mx-auto">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: "#334155" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: "var(--foreground-3)" }}>
           What you can automate
         </p>
-        <p className="text-sm text-center mb-10" style={{ color: "#475569" }}>
+        <p className="text-sm text-center mb-10" style={{ color: "var(--foreground-2)" }}>
           These are real prompts you can type into Operant right now.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,15 +260,15 @@ export default function LandingPage() {
             <div
               key={u.label}
               className="rounded-2xl p-5"
-              style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-md mb-3 inline-block"
-                style={{ background: "rgba(124,58,237,0.12)", color: "#a78bfa" }}
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg mb-3 inline-block"
+                style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
               >
                 {u.label}
               </span>
-              <p className="text-sm leading-relaxed" style={{ color: "#64748b", fontStyle: "italic" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--foreground-2)", fontStyle: "italic" }}>
                 &ldquo;{u.prompt}&rdquo;
               </p>
             </div>
@@ -285,7 +278,7 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section id="how-it-works" className="px-6 py-16 max-w-4xl mx-auto">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "#334155" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "var(--foreground-3)" }}>
           How it works
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -293,11 +286,11 @@ export default function LandingPage() {
             <div
               key={s.n}
               className="rounded-2xl p-6"
-              style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              <span className="text-xs font-bold mb-3 block" style={{ color: "#7c3aed" }}>{s.n}</span>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: "#e2e8f0" }}>{s.title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "#475569" }}>{s.body}</p>
+              <span className="text-xs font-bold mb-3 block" style={{ color: "var(--accent)" }}>{s.n}</span>
+              <h3 className="text-sm font-semibold mb-2">{s.title}</h3>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--foreground-2)" }}>{s.body}</p>
             </div>
           ))}
         </div>
@@ -305,7 +298,7 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className="px-6 py-16 max-w-4xl mx-auto">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "#334155" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "var(--foreground-3)" }}>
           Built different
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -313,11 +306,16 @@ export default function LandingPage() {
             <div
               key={f.title}
               className="rounded-2xl p-5"
-              style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              <span className="text-xl mb-3 block">{f.icon}</span>
-              <h3 className="text-sm font-semibold mb-1.5" style={{ color: "#e2e8f0" }}>{f.title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "#475569" }}>{f.body}</p>
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm mb-4 font-mono"
+                style={{ background: "var(--accent-glow)", color: "var(--accent)", border: "1px solid rgba(218,119,86,0.2)" }}
+              >
+                {f.icon}
+              </div>
+              <h3 className="text-sm font-semibold mb-1.5">{f.title}</h3>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--foreground-2)" }}>{f.body}</p>
             </div>
           ))}
         </div>
@@ -325,29 +323,27 @@ export default function LandingPage() {
 
       {/* Integrations */}
       <section id="integrations" className="px-6 py-16 max-w-4xl mx-auto">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: "#334155" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: "var(--foreground-3)" }}>
           Integrations
         </p>
-        <p className="text-sm text-center mb-10" style={{ color: "#475569" }}>
+        <p className="text-sm text-center mb-10" style={{ color: "var(--foreground-2)" }}>
           Connect your stack once. Operant handles the rest.
         </p>
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-          {INTEGRATIONS.map((i) => (
+        <div className="flex flex-wrap justify-center gap-3">
+          {INTEGRATIONS.map((name) => (
             <div
-              key={i.name}
-              className="rounded-xl p-4 flex flex-col items-center gap-2"
-              style={{ background: i.color, border: "1px solid #1a1a2e" }}
+              key={name}
+              className="px-4 py-2 rounded-xl text-sm font-medium"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--foreground-2)" }}
             >
-              <span className="text-2xl">{i.icon}</span>
-              <span className="text-xs font-medium text-center" style={{ color: "#64748b" }}>{i.name}</span>
+              {name}
             </div>
           ))}
           <div
-            className="rounded-xl p-4 flex flex-col items-center gap-2"
-            style={{ background: "rgba(124,58,237,0.05)", border: "1px dashed rgba(124,58,237,0.2)" }}
+            className="px-4 py-2 rounded-xl text-sm font-medium"
+            style={{ background: "var(--accent-glow)", border: "1px dashed rgba(218,119,86,0.3)", color: "var(--accent)" }}
           >
-            <span className="text-2xl">➕</span>
-            <span className="text-xs font-medium text-center" style={{ color: "#7c3aed" }}>More coming</span>
+            + More coming
           </div>
         </div>
       </section>
@@ -356,22 +352,20 @@ export default function LandingPage() {
       <section className="px-6 py-16 max-w-4xl mx-auto">
         <div
           className="rounded-2xl p-8 md:p-10"
-          style={{ background: "#0d0d12", border: "1px solid #1a1a2e" }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         >
-          <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "#334155" }}>You own your workflows</p>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: "#f1f5f9" }}>
-            Export to n8n, Make.com, or Zapier
-          </h2>
-          <p className="text-sm leading-relaxed mb-6" style={{ color: "#64748b" }}>
-            Operant isn't a lock-in platform. Every workflow you build can be exported as a native JSON file for n8n or a Make.com scenario —
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--foreground-3)" }}>You own your workflows</p>
+          <h2 className="text-2xl font-bold mb-4">Export to n8n, Make.com, or Zapier</h2>
+          <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--foreground-2)" }}>
+            Operant isn&apos;t a lock-in platform. Every workflow you build can be exported as a native JSON file for n8n or a Make.com scenario —
             so you can hand it to a client, run it self-hosted, or migrate it later without losing your work.
           </p>
           <div className="flex flex-wrap gap-3">
-            {["n8n JSON", "Make.com scenario", "Zapier Zap (coming soon)"].map((platform) => (
+            {["n8n JSON", "Make.com scenario", "Zapier guide (beta)"].map((platform) => (
               <span
                 key={platform}
-                className="text-xs px-3 py-1.5 rounded-lg"
-                style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", color: "#a78bfa" }}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                style={{ background: "var(--accent-glow)", border: "1px solid rgba(218,119,86,0.25)", color: "var(--accent)" }}
               >
                 {platform}
               </span>
@@ -384,56 +378,52 @@ export default function LandingPage() {
       <section className="px-6 py-20 text-center max-w-2xl mx-auto">
         <div
           className="rounded-2xl p-10"
-          style={{ background: "#0d0d12", border: "1px solid rgba(124,58,237,0.2)" }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         >
-          <h2 className="text-2xl font-bold mb-3" style={{ color: "#f1f5f9" }}>
-            Ready to automate everything?
-          </h2>
-          <p className="text-sm mb-2" style={{ color: "#475569" }}>
+          <h2 className="text-2xl font-bold mb-3">Ready to automate everything?</h2>
+          <p className="text-sm mb-2" style={{ color: "var(--foreground-2)" }}>
             Create your account and connect your first integration in under 2 minutes.
           </p>
-          <p className="text-xs mb-8" style={{ color: "#334155" }}>
+          <p className="text-xs mb-8" style={{ color: "var(--foreground-3)" }}>
             Free plan available. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/auth?mode=signup"
-              className="inline-block px-8 py-3 rounded-xl text-sm font-semibold"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", color: "#fff", boxShadow: "0 0 32px rgba(124,58,237,0.3)" }}
+              className="inline-block px-8 py-3 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: "var(--accent)", color: "#fff" }}
             >
               Create free account
             </Link>
             <Link
-              href="/pricing"
-              className="inline-block px-8 py-3 rounded-xl text-sm font-medium"
-              style={{ background: "rgba(255,255,255,0.04)", color: "#94a3b8", border: "1px solid #1a1a2e" }}
+              href="/demo"
+              className="inline-block px-8 py-3 rounded-xl text-sm font-medium transition-all"
+              style={{ background: "var(--background)", color: "var(--foreground-2)", border: "1px solid var(--border)" }}
             >
-              View pricing
+              Watch the demo →
             </Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="px-6 py-10" style={{ borderTop: "1px solid #1a1a2e" }}>
+      <footer className="px-6 py-10" style={{ borderTop: "1px solid var(--border)" }}>
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div
-              className="w-6 h-6 rounded-md flex items-center justify-center"
-              style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}
-            >
-              <span style={{ fontSize: 12 }}>⚡</span>
+            <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "var(--accent)" }}>
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                <path d="M2 7h3M7 2v3M7 9v3M9 7h3M4.5 4.5l1.5 1.5M8 8l1.5 1.5M9.5 4.5L8 6M4.5 9.5L6 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </div>
-            <span className="text-xs font-semibold" style={{ color: "#334155" }}>Operant AI</span>
+            <span className="text-xs font-semibold" style={{ color: "var(--foreground-2)" }}>Operant AI</span>
           </div>
-          <div className="flex items-center gap-6 text-xs" style={{ color: "#1e293b" }}>
-            <Link href="/pricing" className="hover:text-slate-500 transition-colors">Pricing</Link>
-            <Link href="/auth" className="hover:text-slate-500 transition-colors">Sign in</Link>
-            <Link href="/auth?mode=signup" className="hover:text-slate-500 transition-colors">Sign up</Link>
+          <div className="flex items-center gap-6 text-xs" style={{ color: "var(--foreground-3)" }}>
+            <Link href="/demo" className="transition-colors hover:text-[var(--foreground-2)]">Demo</Link>
+            <Link href="/pricing" className="transition-colors hover:text-[var(--foreground-2)]">Pricing</Link>
+            <Link href="/auth" className="transition-colors hover:text-[var(--foreground-2)]">Sign in</Link>
+            <Link href="/auth?mode=signup" className="transition-colors hover:text-[var(--foreground-2)]">Sign up</Link>
           </div>
-          <p className="text-xs" style={{ color: "#1e293b" }}>
-            © 2026 Operant AI
-          </p>
+          <p className="text-xs" style={{ color: "var(--foreground-3)" }}>© 2026 Operant AI</p>
         </div>
       </footer>
     </div>
