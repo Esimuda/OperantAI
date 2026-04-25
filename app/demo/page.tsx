@@ -273,13 +273,13 @@ function SlideClose() {
 
 /* ── Script cues per slide ── */
 const SCRIPT_CUES = [
-  "Every business runs on repetitive operations. Operant AI is the agent that runs your entire operations layer — automatically.",
-  "Today, automation requires specialists wiring tools by hand for hours. We replace that with one sentence.",
-  "Watch the 8-stage orchestrator run live. It interprets your goal, builds a plan, selects tools, executes, and reflects — all automatically.",
-  "Every run feeds three memory tiers. Short-term for the current run, long-term across all runs, and a pattern layer that learns from failures.",
-  "No lock-in. Every workflow Operant AI builds exports to n8n, Make.com, or as a Zapier guide — ready to drop into tools you already use.",
-  "Fifteen integrations connected today via API key or OAuth. The agent selects the right tools automatically based on your request.",
-  "Operant AI is Claude Code, but for automation specialists — and for every business that doesn't have one.",
+  "Every business runs on repetitive operations — logging leads, syncing data, sending emails. Building those automations takes hours of manual setup. Operant AI changes that. Describe what you want in plain English — the agent builds it, runs it, and learns from it.",
+  "Automation tools like Zapier and n8n are powerful — but they require a specialist. Every workflow is hours of drag-and-drop, configuration, and debugging. Operant AI replaces all of that with a single sentence. And unlike other tools, it doesn't just suggest — it executes.",
+  "Here's a real workflow running live. Watch the 8-stage pipeline — it interprets the goal, loads memory, builds a dependency graph, selects tools, and executes in parallel. Every step is visible. When done, it reflects and saves the pattern to memory so next time is faster.",
+  "Three memory tiers. Short-term holds context during a single run. Long-term persists preferences across all runs using relevance scoring. The pattern layer stores every failure and fix — so the agent never makes the same mistake twice.",
+  "Operant AI doesn't lock you in. Every workflow exports as n8n JSON, a Make dot com scenario, or a step-by-step Zapier guide. You get the agent's intelligence and keep full portability.",
+  "Fifteen integrations live today — Stripe, Notion, Gmail, Slack, HubSpot, GitHub, Airtable, Twilio, Linear, Discord, Resend, and more. Connect via API key or OAuth. The agent selects the right tools automatically.",
+  "Operant AI is Claude Code, but for automation specialists — and for the 90 percent of businesses who don't have one. You describe the outcome. The agent handles the rest. This is Operant AI.",
 ];
 
 /* ── Main component ── */
