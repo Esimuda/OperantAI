@@ -44,6 +44,11 @@ export async function loadMemoryEntries(
   }));
 }
 
+export async function deleteMemoryEntry(userId: string, type: MemoryType, key: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("agent_memory").delete().eq("user_id", userId).eq("type", type).eq("key", key);
+}
+
 export async function clearMemoryByType(userId: string, type: MemoryType): Promise<void> {
   const supabase = await createClient();
   await supabase.from("agent_memory").delete().eq("user_id", userId).eq("type", type);

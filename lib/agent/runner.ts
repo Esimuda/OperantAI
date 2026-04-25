@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getActiveTools } from "./tools";
 import { executeTool, RunContext } from "./executor";
-import { AgentRun, AgentStreamEvent, BusinessProfile, IntegrationConfig } from "@/lib/types";
+import { AgentRun, AgentStreamEvent, BusinessProfile, IntegrationConfig, MemoryEntry } from "@/lib/types";
 import { INTEGRATION_META } from "@/lib/integrations/meta";
 import type { SavedWorkflow } from "@/lib/db/workflows";
 import type { CustomTool } from "@/lib/db/customTools";
@@ -26,7 +26,28 @@ ${workflowLines}${refLines ? `\n  Default references:\n${refLines}` : ""}${profi
 `;
 }
 
-function buildSystemPrompt(config: IntegrationConfig, profile?: BusinessProfile | null, customTools: CustomTool[] = []): string {
+function formatMemorySection(memories: MemoryEntry[]): string {
+  if (memories.length === 0) return "";
+  const lines = memories.map((m) => {
+    const prefix = m.type === "pattern" ? "[past failure]" : "[learned]";
+    const val = typeof m.value === "object" && m.value !== null
+      ? (() => {
+          const v = m.value as Record<string, unknown>;
+          if (m.type === "pattern") {
+            return `${v.failure} (tool: ${v.tool ?? "unknown"}) → ${v.solution}`;
+          }
+          if (v.goal && Array.isArray(v.tools)) {
+            return `${v.goal} — worked with: ${(v.tools as string[]).join(", ")}`;
+          }
+          return JSON.stringify(v).slice(0, 120);
+        })()
+      : String(m.value).slice(0, 120);
+    return `  ${prefix} ${val}`;
+  });
+  return `\nMEMORY (apply this context — don't ask for information you already know):\n${lines.join("\n")}\n`;
+}
+
+function buildSystemPrompt(config: IntegrationConfig, profile?: BusinessProfile | null, customTools: CustomTool[] = [], memoryContext?: MemoryEntry[]): string {
   const connected = INTEGRATION_META.filter((m) => m.isConnected(config));
   const disconnected = INTEGRATION_META.filter((m) => !m.isConnected(config));
 
@@ -41,9 +62,10 @@ function buildSystemPrompt(config: IntegrationConfig, profile?: BusinessProfile 
       : "  None";
 
   const businessContext = profile ? buildBusinessContext(profile) : "";
+  const memorySection = memoryContext ? formatMemorySection(memoryContext) : "";
 
   return `You are Operant AI — an intelligent operations agent built for automation and operations professionals.
-${businessContext}
+${businessContext}${memorySection}
 CONNECTED INTEGRATIONS (you may use these tools):
 ${connectedSection}
 
@@ -104,6 +126,7 @@ export interface RunnerOptions {
   savedWorkflows?: SavedWorkflow[];
   runHistory?: AgentRun[];
   customTools?: CustomTool[];
+  memoryContext?: MemoryEntry[];
 }
 
 function buildCustomToolDefs(customTools: CustomTool[]): Anthropic.Tool[] {
@@ -126,7 +149,7 @@ function buildCustomToolDefs(customTools: CustomTool[]): Anthropic.Tool[] {
 }
 
 export async function runAgent(options: RunnerOptions): Promise<string> {
-  const { message, conversationHistory, runId, emit, config, businessProfile, savedWorkflows, runHistory, customTools = [] } = options;
+  const { message, conversationHistory, runId, emit, config, businessProfile, savedWorkflows, runHistory, customTools = [], memoryContext } = options;
   const runContext: RunContext = { savedWorkflows, runHistory, customTools };
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -147,7 +170,7 @@ export async function runAgent(options: RunnerOptions): Promise<string> {
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
-      system: buildSystemPrompt(config, businessProfile, customTools),
+      system: buildSystemPrompt(config, businessProfile, customTools, memoryContext),
       tools: [...getActiveTools(config), ...customToolDefs],
       messages,
     });

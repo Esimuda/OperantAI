@@ -34,15 +34,17 @@ export async function runOrchestrator(options: OrchestratorOptions): Promise<str
 
   const goal = await interpretIntent(message, businessCtx);
 
-  // Route simple / conversational requests to the fast single-agent path
-  if (goal.isConversational && !goal.isWorkflowRequest) {
-    return runAgent(options);
-  }
-
   // ── Memory init ──────────────────────────────────────────────────────────────
   const memory = new MemoryManager(userId);
   await memory.init();
   memory.setShortTerm("goal", goal);
+
+  const relevantMemories = memory.searchRelevant(goal.goal, 6);
+
+  // Route simple / conversational requests to the fast single-agent path
+  if (goal.isConversational && !goal.isWorkflowRequest) {
+    return runAgent({ ...options, memoryContext: relevantMemories });
+  }
 
   // ── Layer 2: Planning ────────────────────────────────────────────────────────
   emit({ type: "agent_stage", runId, stage: "planning", description: "Breaking goal into steps..." });
@@ -121,7 +123,7 @@ export async function runOrchestrator(options: OrchestratorOptions): Promise<str
     const executionMessage = buildExecutionMessage(goal.goal, plan, toolMappings, isRetry);
 
     try {
-      finalMessage = await runAgent({ ...options, message: executionMessage, emit: interceptEmit });
+      finalMessage = await runAgent({ ...options, message: executionMessage, emit: interceptEmit, memoryContext: relevantMemories });
     } catch (err) {
       finalMessage = `Execution error: ${err instanceof Error ? err.message : String(err)}`;
     }
@@ -141,8 +143,8 @@ export async function runOrchestrator(options: OrchestratorOptions): Promise<str
     // ── Layer 7: Reflection ──────────────────────────────────────────────────
     emit({ type: "agent_stage", runId, stage: "reflecting", description: "Diagnosing results..." });
 
-    const relevantMemories = memory.searchRelevant(goal.goal, 6);
-    const reflection = await reflect(observation, relevantMemories);
+    const reflectionMemories = memory.searchRelevant(goal.goal, 6);
+    const reflection = await reflect(observation, reflectionMemories);
     execution.reflection = reflection;
     emit({ type: "reflection_complete", runId, reflection });
 
@@ -161,6 +163,16 @@ export async function runOrchestrator(options: OrchestratorOptions): Promise<str
         });
       }
       memory.deduplicatePatterns();
+    }
+
+    // Save successful run pattern to long-term memory
+    if (!reflection.hasIssues) {
+      await memory.saveLongTerm(`success:${goal.goal.slice(0, 50)}`, {
+        goal: goal.goal,
+        steps: plan.steps.map((s) => s.description),
+        tools: toolMappings.map((m) => m.tool),
+        completedAt: Date.now(),
+      }, 0.9);
     }
 
     if (!reflection.shouldRetry || retryCount >= MAX_RETRIES) break;

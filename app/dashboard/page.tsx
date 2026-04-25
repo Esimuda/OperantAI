@@ -11,6 +11,7 @@ import SettingsPanel from "@/components/SettingsPanel";
 import DashboardPanel from "@/components/DashboardPanel";
 import MonitoringPanel from "@/components/MonitoringPanel";
 import CustomToolsPanel from "@/components/CustomToolsPanel";
+import MemoryPanel from "@/components/MemoryPanel";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { AgentRun, AgentStage, AgentStreamEvent, BusinessProfile, ChatMessage, ExecutionObservation, PanelView, ReflectionResult, ToolCallRecord } from "@/lib/types";
 import { loadProfile, saveProfile } from "@/lib/db/businessProfile";
@@ -352,6 +353,7 @@ function DashboardInner() {
           {panelView === "settings"  && <SettingsPanel businessProfile={businessProfile} />}
           {panelView === "monitor"   && <MonitoringPanel />}
           {panelView === "tools"     && <CustomToolsPanel />}
+          {panelView === "memory"    && <MemoryPanel />}
         </div>
       </main>
 
