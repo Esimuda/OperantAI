@@ -5,15 +5,15 @@ import Link from "next/link";
 
 /* ── Slide definitions ── */
 const SLIDES = [
-  { id: "hook",         duration: 28, label: "Hook" },
-  { id: "problem",      duration: 28, label: "Problem" },
-  { id: "pipeline",     duration: 72, label: "Live Demo" },
-  { id: "memory",       duration: 22, label: "Memory" },
-  { id: "export",       duration: 22, label: "Export" },
-  { id: "integrations", duration: 18, label: "Integrations" },
-  { id: "close",        duration: 30, label: "Close" },
+  { id: "hook",         duration: 18, label: "Hook" },
+  { id: "problem",      duration: 18, label: "Problem" },
+  { id: "pipeline",     duration: 52, label: "Live Demo" },
+  { id: "memory",       duration: 15, label: "Memory" },
+  { id: "export",       duration: 15, label: "Export" },
+  { id: "integrations", duration: 12, label: "Integrations" },
+  { id: "close",        duration: 20, label: "Close" },
 ];
-// Total: 220s ≈ 3 min 40 sec
+// Total: 150s = 2 min 30 sec
 
 const INTEGRATIONS = [
   "Notion","Slack","Stripe","Gmail","HubSpot",
@@ -22,20 +22,20 @@ const INTEGRATIONS = [
 ];
 
 const PIPELINE_STAGES = [
-  { stage: "Interpret",    desc: "Parsing goal into structured intent",         icon: "◎", delay: 800  },
-  { stage: "Memory",       desc: "Loading relevant past patterns",              icon: "⟳", delay: 1600 },
-  { stage: "Plan",         desc: "Breaking goal into dependency steps",         icon: "⊞", delay: 2400 },
-  { stage: "Select Tools", desc: "Mapping steps → Stripe, Notion, Resend",     icon: "⚙", delay: 3200 },
-  { stage: "Build Graph",  desc: "Synthesising parallel execution DAG",         icon: "⬡", delay: 4000 },
-  { stage: "Execute",      desc: "Running 3 tool calls (1 parallel)",           icon: "▶", delay: 5000 },
-  { stage: "Observe",      desc: "100% success · 2.1s · 3 tool calls",         icon: "✓", delay: 5800 },
-  { stage: "Reflect",      desc: "No failures. Workflow saved to memory.",      icon: "★", delay: 6600 },
+  { stage: "Interpret",    desc: "Parsing goal into structured intent",         icon: "◎", delay: 400  },
+  { stage: "Memory",       desc: "Loading relevant past patterns",              icon: "⟳", delay: 800  },
+  { stage: "Plan",         desc: "Breaking goal into dependency steps",         icon: "⊞", delay: 1200 },
+  { stage: "Select Tools", desc: "Mapping steps → Stripe, Notion, Resend",     icon: "⚙", delay: 1600 },
+  { stage: "Build Graph",  desc: "Synthesising parallel execution DAG",         icon: "⬡", delay: 2000 },
+  { stage: "Execute",      desc: "Running 3 tool calls (1 parallel)",           icon: "▶", delay: 2500 },
+  { stage: "Observe",      desc: "100% success · 2.1s · 3 tool calls",         icon: "✓", delay: 3000 },
+  { stage: "Reflect",      desc: "No failures. Workflow saved to memory.",      icon: "★", delay: 3500 },
 ];
 
 const TOOL_CALLS = [
-  { tool: "stripe_list_customers", time: "0.3s", output: "Found: sarah@acme.com", delay: 5200 },
-  { tool: "notion_create_page",    time: "0.8s", output: "Lead added to CRM database", delay: 5700 },
-  { tool: "resend_send_email",     time: "0.6s", output: "Welcome email delivered ✓", delay: 6200 },
+  { tool: "stripe_list_customers", time: "0.3s", output: "Found: sarah@acme.com", delay: 2600 },
+  { tool: "notion_create_page",    time: "0.8s", output: "Lead added to CRM database", delay: 3000 },
+  { tool: "resend_send_email",     time: "0.6s", output: "Welcome email delivered ✓", delay: 3400 },
 ];
 
 /* ── Helpers ── */
@@ -144,8 +144,8 @@ function SlidePipeline({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (!active) { setPipeRunning(false); setComplete(false); return; }
-    const t1 = setTimeout(() => setPipeRunning(true), 1000);
-    const t2 = setTimeout(() => setComplete(true), 7200);
+    const t1 = setTimeout(() => setPipeRunning(true), 600);
+    const t2 = setTimeout(() => setComplete(true), 4200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [active]);
 
@@ -273,13 +273,13 @@ function SlideClose() {
 
 /* ── Script cues per slide ── */
 const SCRIPT_CUES = [
-  "Every business runs on repetitive operations — logging leads, syncing data, sending emails. Building those automations takes hours of manual setup. Operant AI changes that. Describe what you want in plain English — the agent builds it, runs it, and learns from it.",
-  "Automation tools like Zapier and n8n are powerful — but they require a specialist. Every workflow is hours of drag-and-drop, configuration, and debugging. Operant AI replaces all of that with a single sentence. And unlike other tools, it doesn't just suggest — it executes.",
-  "Here's a real workflow running live. Watch the 8-stage pipeline — it interprets the goal, loads memory, builds a dependency graph, selects tools, and executes in parallel. Every step is visible. When done, it reflects and saves the pattern to memory so next time is faster.",
-  "Three memory tiers. Short-term holds context during a single run. Long-term persists preferences across all runs using relevance scoring. The pattern layer stores every failure and fix — so the agent never makes the same mistake twice.",
-  "Operant AI doesn't lock you in. Every workflow exports as n8n JSON, a Make dot com scenario, or a step-by-step Zapier guide. You get the agent's intelligence and keep full portability.",
-  "Fifteen integrations live today — Stripe, Notion, Gmail, Slack, HubSpot, GitHub, Airtable, Twilio, Linear, Discord, Resend, and more. Connect via API key or OAuth. The agent selects the right tools automatically.",
-  "Operant AI is Claude Code, but for automation specialists — and for the 90 percent of businesses who don't have one. You describe the outcome. The agent handles the rest. This is Operant AI.",
+  "What if you could automate any business process just by describing it? No setup. No specialist. That's Operant AI — the agent that runs your entire operations layer, automatically.",
+  "Right now, automation means hours in Zapier or n8n — configuring every step by hand. Most businesses don't bother. Operant AI replaces all of that with one sentence. And it doesn't just suggest — it executes.",
+  "Here it is live. New Stripe customer → Notion CRM → welcome email. Watch the 8-stage pipeline fire in real time. Three tools. Two seconds. Done — and saved to memory for next time.",
+  "Every run feeds a three-tier memory system. Short-term for this run, long-term across all runs, and a pattern layer that learns from every failure — so the agent never repeats a mistake.",
+  "Zero lock-in. Export any workflow as n8n JSON, a Make dot com scenario, or a Zapier guide — straight into whatever your team already uses.",
+  "Fifteen integrations live today. Stripe, Notion, Gmail, Slack, HubSpot, GitHub, and more. Connect once — the agent picks the right tools automatically.",
+  "Operant AI is Claude Code, but for automation. You describe the outcome. The agent plans it, runs it, learns from it, and exports it. No specialist required. This is Operant AI.",
 ];
 
 /* ── Main component ── */
