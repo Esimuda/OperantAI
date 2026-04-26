@@ -1,7 +1,10 @@
 import { Client } from "@notionhq/client";
 
+// Pin to the stable 2022-06-28 API version so all standard endpoints work
+// regardless of the SDK's default version (v5 defaults to 2025-09-03 which
+// replaced several endpoints and broke backwards compatibility).
 function client(apiKey: string) {
-  return new Client({ auth: apiKey });
+  return new Client({ auth: apiKey, notionVersion: "2022-06-28" } as ConstructorParameters<typeof Client>[0]);
 }
 
 // Extracts a clean 32-char hex UUID from whatever the user pasted (full URL, with dashes, etc.)
@@ -31,22 +34,19 @@ export async function createDatabase(
     properties[name] = { [type]: {} };
   }
 
-  // Use page parent if a valid ID was provided, otherwise create at workspace root
   const parent: Record<string, unknown> =
     parentPageId && parentPageId.toLowerCase() !== "root" && parentPageId.toLowerCase() !== "workspace"
       ? { page_id: sanitizeId(parentPageId) }
       : { workspace: true };
 
-  const dsClient = (notion as unknown as {
-    dataSources: {
-      create: (args: Record<string, unknown>) => Promise<{ id: string }>;
-    };
-  }).dataSources;
-
-  const db = await dsClient.create({
-    parent,
-    title: [{ type: "text", text: { content: title } }],
-    properties,
+  const db = await notion.request<{ id: string }>({
+    path: "databases",
+    method: "post",
+    body: {
+      parent,
+      title: [{ type: "text", text: { content: title } }],
+      properties,
+    },
   });
 
   return `Created Notion database: "${title}" (id: ${db.id}). Columns: Name (title), ${Object.keys(columns).join(", ")}.`;
@@ -95,32 +95,26 @@ export async function queryDatabase(
   pageSize = 10
 ): Promise<string> {
   const notion = client(apiKey);
-
   const cleanId = sanitizeId(databaseId);
 
-  // The installed SDK (v5, API version 2025-09-03) replaced databases/{id}/query
-  // with data_sources/{id}/query. Use the dataSources namespace accordingly.
-  const dsClient = (notion as unknown as {
-    dataSources: {
-      query: (args: Record<string, unknown>) => Promise<{
-        results: Array<{ id: string; properties: Record<string, unknown> }>;
-      }>;
-    };
-  }).dataSources;
-
-  const queryArgs: Record<string, unknown> = {
-    data_source_id: cleanId,
+  const body: Record<string, unknown> = {
     page_size: Math.min(pageSize, 25),
   };
 
   if (filterProperty && filterValue) {
-    queryArgs.filter = {
+    body.filter = {
       property: filterProperty,
       rich_text: { contains: filterValue },
     };
   }
 
-  const response = await dsClient.query(queryArgs);
+  const response = await notion.request<{
+    results: Array<{ id: string; properties: Record<string, unknown> }>;
+  }>({
+    path: `databases/${cleanId}/query`,
+    method: "post",
+    body,
+  });
 
   if (response.results.length === 0) {
     return "No records found in the database.";
