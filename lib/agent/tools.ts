@@ -10,10 +10,6 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: "object" as const,
       properties: {
-        parent_page_id: {
-          type: "string",
-          description: "The Notion page ID where the database will be created.",
-        },
         title: {
           type: "string",
           description: "The name of the new database.",
@@ -23,8 +19,12 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
           description:
             "Column definitions. Keys are column names, values are types: rich_text, email, number, select, date, checkbox, url, phone_number. A 'Name' title column is always added automatically.",
         },
+        parent_page_id: {
+          type: "string",
+          description: "Optional. The Notion page ID where the database will be created. If omitted, the database is created at the workspace root.",
+        },
       },
-      required: ["parent_page_id", "title", "columns"],
+      required: ["title", "columns"],
     },
   },
   {

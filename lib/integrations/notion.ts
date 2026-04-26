@@ -17,9 +17,9 @@ function sanitizeId(raw: string): string {
 
 export async function createDatabase(
   apiKey: string,
-  parentPageId: string,
   title: string,
-  columns: Record<string, "rich_text" | "email" | "number" | "select" | "date" | "checkbox" | "url" | "phone_number">
+  columns: Record<string, "rich_text" | "email" | "number" | "select" | "date" | "checkbox" | "url" | "phone_number">,
+  parentPageId?: string
 ): Promise<string> {
   const notion = client(apiKey);
 
@@ -31,6 +31,12 @@ export async function createDatabase(
     properties[name] = { [type]: {} };
   }
 
+  // Use page parent if a valid ID was provided, otherwise create at workspace root
+  const parent: Record<string, unknown> =
+    parentPageId && parentPageId.toLowerCase() !== "root" && parentPageId.toLowerCase() !== "workspace"
+      ? { page_id: sanitizeId(parentPageId) }
+      : { workspace: true };
+
   const dsClient = (notion as unknown as {
     dataSources: {
       create: (args: Record<string, unknown>) => Promise<{ id: string }>;
@@ -38,7 +44,7 @@ export async function createDatabase(
   }).dataSources;
 
   const db = await dsClient.create({
-    parent: { page_id: sanitizeId(parentPageId) },
+    parent,
     title: [{ type: "text", text: { content: title } }],
     properties,
   });

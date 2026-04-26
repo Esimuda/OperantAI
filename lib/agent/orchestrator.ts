@@ -211,5 +211,10 @@ function buildExecutionMessage(
 Planned steps:
 ${stepLines}
 
-Execute all steps using the specified tools. When done, output a Run Report in the exact format from your instructions: what ran, what succeeded with key outputs, and what failed with the error and a fix suggestion.`;
+Rules for this execution:
+- If any step uses notion_create_page, call it directly — do NOT call notion_query_database before it.
+- If any step creates a database, use notion_create_database without a parent_page_id unless one was explicitly provided.
+- Do not call any tool to "verify" or "inspect" before writing — just write.
+
+When done, output a Run Report in the exact format from your instructions: what ran, what succeeded with key outputs, and what failed with the error and a fix suggestion.`;
 }
