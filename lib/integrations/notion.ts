@@ -61,24 +61,29 @@ export async function queryDatabase(
 
   const cleanId = sanitizeId(databaseId);
 
-  const body: Record<string, unknown> = {
+  // The installed SDK (v5, API version 2025-09-03) replaced databases/{id}/query
+  // with data_sources/{id}/query. Use the dataSources namespace accordingly.
+  const dsClient = (notion as unknown as {
+    dataSources: {
+      query: (args: Record<string, unknown>) => Promise<{
+        results: Array<{ id: string; properties: Record<string, unknown> }>;
+      }>;
+    };
+  }).dataSources;
+
+  const queryArgs: Record<string, unknown> = {
+    data_source_id: cleanId,
     page_size: Math.min(pageSize, 25),
   };
 
   if (filterProperty && filterValue) {
-    body.filter = {
+    queryArgs.filter = {
       property: filterProperty,
       rich_text: { contains: filterValue },
     };
   }
 
-  const response = await notion.request<{
-    results: Array<{ id: string; properties: Record<string, unknown> }>;
-  }>({
-    path: `databases/${cleanId}/query`,
-    method: "post",
-    body,
-  });
+  const response = await dsClient.query(queryArgs);
 
   if (response.results.length === 0) {
     return "No records found in the database.";
