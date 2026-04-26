@@ -48,25 +48,19 @@ export async function queryDatabase(
 ): Promise<string> {
   const notion = client(apiKey);
 
-  // Use the raw Notion API since SDK types may vary by version
-  const body: Record<string, unknown> = {
+  const queryParams: Parameters<typeof notion.databases.query>[0] = {
+    database_id: databaseId.replace(/-/g, "").replace(/\s/g, ""),
     page_size: Math.min(pageSize, 25),
   };
 
   if (filterProperty && filterValue) {
-    body.filter = {
+    queryParams.filter = {
       property: filterProperty,
       rich_text: { contains: filterValue },
-    };
+    } as Parameters<typeof notion.databases.query>[0]["filter"];
   }
 
-  const response = await notion.request<{
-    results: Array<{ id: string; properties: Record<string, unknown> }>;
-  }>({
-    path: `databases/${databaseId}/query`,
-    method: "post",
-    body,
-  });
+  const response = await notion.databases.query(queryParams);
 
   if (response.results.length === 0) {
     return "No records found in the database.";
