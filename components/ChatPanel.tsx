@@ -17,6 +17,7 @@ interface ChatPanelProps {
   isOnboarding?: boolean;
   hasProfile?: boolean;
   onStartOnboarding?: () => void;
+  onNewChat?: () => void;
 }
 
 const PLACEHOLDER_PROMPTS = [
@@ -133,6 +134,7 @@ export default function ChatPanel({
   isOnboarding = false,
   hasProfile = false,
   onStartOnboarding,
+  onNewChat,
 }: ChatPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -181,6 +183,31 @@ export default function ChatPanel({
 
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--background)" }}>
+      {/* Chat header — New Chat button when a conversation is active */}
+      {!isOnboarding && messages.length > 0 && onNewChat && (
+        <div
+          className="flex-shrink-0 flex items-center justify-between px-4 py-2"
+          style={{ borderBottom: "1px solid var(--border)" }}
+        >
+          <span className="text-[11px]" style={{ color: "var(--foreground-muted)" }}>
+            {messages.length} message{messages.length !== 1 ? "s" : ""}
+          </span>
+          <button
+            onClick={onNewChat}
+            className="text-[11px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all"
+            style={{ color: "var(--foreground-3)", border: "1px solid var(--border)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; e.currentTarget.style.borderColor = "var(--accent)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--foreground-3)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+            title="Start a new chat"
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1H2a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V6M9 1l2 2-5 5H4V6l5-5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            New chat
+          </button>
+        </div>
+      )}
+
       {/* Onboarding mode banner */}
       {isOnboarding && (
         <div

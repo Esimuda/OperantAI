@@ -11,6 +11,7 @@ interface TopBarProps {
   onViewChange: (view: PanelView) => void;
   hasActiveRun?: boolean;
   workspaceName?: string;
+  onNewChat?: () => void;
 }
 
 const VIEWS: { id: PanelView; label: string }[] = [
@@ -24,7 +25,7 @@ const VIEWS: { id: PanelView; label: string }[] = [
   { id: "settings",  label: "Settings" },
 ];
 
-export default function TopBar({ activeView, onViewChange, hasActiveRun, workspaceName }: TopBarProps) {
+export default function TopBar({ activeView, onViewChange, hasActiveRun, workspaceName, onNewChat }: TopBarProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -74,6 +75,22 @@ export default function TopBar({ activeView, onViewChange, hasActiveRun, workspa
 
       {/* Desktop nav */}
       <div className="hidden md:flex items-center gap-3">
+        {onNewChat && (
+          <button
+            onClick={onNewChat}
+            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-medium"
+            style={{ color: "var(--foreground-2)", border: "1px solid var(--border)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accent-glow)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--foreground-2)"; e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "transparent"; }}
+            title="Start a new chat"
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1H2a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V6M9 1l2 2-5 5H4V6l5-5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            New chat
+          </button>
+        )}
+
         <Link
           href="/workspaces"
           className="text-xs px-3 py-1.5 rounded-lg transition-all"

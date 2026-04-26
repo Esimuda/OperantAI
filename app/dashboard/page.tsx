@@ -48,8 +48,12 @@ function DashboardInner() {
   const isOnboardingRef = useRef(false);
   const cachedWorkflowsRef = useRef<Awaited<ReturnType<typeof listWorkflows>>>([]);
   const cachedRunHistoryRef = useRef<AgentRun[]>([]);
+  const messagesRef = useRef<ChatMessage[]>([]);
 
   useScheduler();
+
+  // Keep messagesRef in sync for snapshots
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   // Show OAuth success toast
   useEffect(() => {
@@ -87,6 +91,51 @@ function DashboardInner() {
     return () => {
       window.removeEventListener("operant-start-onboarding", handleStart);
       window.removeEventListener("operant-run-workflow", handleRun);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const newChat = useCallback(() => {
+    setMessages([]);
+    setCurrentRun(null);
+    setCurrentStage(null);
+    setCurrentReflection(null);
+    setCurrentObservation(null);
+    setInputValue("");
+    historyRef.current = [];
+    isOnboardingRef.current = false;
+    setIsOnboarding(false);
+  }, []);
+
+  // Re-run: pre-fill input with the original prompt
+  // Restore: reload a past conversation's messages + history
+  useEffect(() => {
+    const handleRerun = (e: Event) => {
+      const { prompt } = (e as CustomEvent<{ prompt: string }>).detail;
+      setInputValue(prompt);
+      setMobileShowPanel(false);
+    };
+    const handleRestore = (e: Event) => {
+      const { run } = (e as CustomEvent<{ run: AgentRun }>).detail;
+      if (run.chatMessages && run.chatMessages.length > 0) {
+        setMessages(run.chatMessages);
+        historyRef.current = run.chatMessages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
+      }
+      setCurrentRun(null);
+      setCurrentStage(null);
+      setCurrentReflection(null);
+      setCurrentObservation(null);
+      setPanelView("run");
+      setMobileShowPanel(false);
+    };
+    window.addEventListener("operant-rerun-prompt", handleRerun);
+    window.addEventListener("operant-restore-chat", handleRestore);
+    return () => {
+      window.removeEventListener("operant-rerun-prompt", handleRerun);
+      window.removeEventListener("operant-restore-chat", handleRestore);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -264,10 +313,10 @@ function DashboardInner() {
         { role: "assistant", content: chatContent },
       ];
 
-      // Persist the completed run to Supabase and refresh cache
+      // Persist the completed run to Supabase (with chat snapshot) and refresh cache
       setCurrentRun((prev) => {
         if (prev) {
-          persistRun(prev).then(() => {
+          persistRun({ ...prev, chatMessages: messagesRef.current }).then(() => {
             listRunHistory().then((r) => { cachedRunHistoryRef.current = r.slice(0, 20); });
           }).catch(console.error);
         }
@@ -361,7 +410,7 @@ function DashboardInner() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: "var(--background)" }}>
-      <TopBar activeView={panelView} onViewChange={setPanelView} hasActiveRun={hasActiveRun} />
+      <TopBar activeView={panelView} onViewChange={setPanelView} hasActiveRun={hasActiveRun} onNewChat={newChat} />
 
       {/* OAuth success toast */}
       {oauthToast && (
@@ -389,6 +438,7 @@ function DashboardInner() {
             isOnboarding={isOnboarding}
             hasProfile={!!businessProfile}
             onStartOnboarding={startOnboarding}
+            onNewChat={newChat}
           />
         </div>
 

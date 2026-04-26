@@ -67,18 +67,48 @@ function RunCard({ run, onDelete }: { run: AgentRun; onDelete: (id: string) => v
         </span>
       </div>
 
-      {run.toolCalls.length > 0 && (
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="text-[10px] flex items-center gap-1 transition-colors"
-          style={{ color: "var(--foreground-3)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground-2)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground-3)")}
-        >
-          <span>{expanded ? "▾" : "▸"}</span>
-          <span>{expanded ? "Hide steps" : "Show steps"}</span>
-        </button>
-      )}
+      <div className="flex items-center justify-between">
+        {run.toolCalls.length > 0 && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="text-[10px] flex items-center gap-1 transition-colors"
+            style={{ color: "var(--foreground-3)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground-2)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground-3)")}
+          >
+            <span>{expanded ? "▾" : "▸"}</span>
+            <span>{expanded ? "Hide steps" : "Show steps"}</span>
+          </button>
+        )}
+        <div className="flex items-center gap-1.5 ml-auto">
+          {run.chatMessages && run.chatMessages.length > 0 && (
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("operant-restore-chat", { detail: { run } }));
+              }}
+              className="text-[10px] px-2 py-1 rounded-md transition-all"
+              style={{ color: "var(--foreground-3)", border: "1px solid var(--border)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accent-glow)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--foreground-3)"; e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "transparent"; }}
+              title="Restore this conversation"
+            >
+              Open chat
+            </button>
+          )}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("operant-rerun-prompt", { detail: { prompt: run.userMessage } }));
+            }}
+            className="text-[10px] px-2 py-1 rounded-md transition-all"
+            style={{ color: "var(--foreground-3)", border: "1px solid var(--border)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#22c55e"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.4)"; e.currentTarget.style.background = "rgba(34,197,94,0.07)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--foreground-3)"; e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "transparent"; }}
+            title="Re-send this prompt"
+          >
+            ↺ Re-run
+          </button>
+        </div>
+      </div>
 
       {expanded && (
         <div className="mt-2 space-y-1">

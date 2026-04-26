@@ -118,6 +118,7 @@ export interface AgentRun {
   userMessage: string;
   finalMessage?: string;
   toolCalls: ToolCallRecord[];
+  chatMessages?: ChatMessage[];
   startedAt: number;
   completedAt?: number;
 }
