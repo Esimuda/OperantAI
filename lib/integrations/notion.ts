@@ -15,6 +15,37 @@ function sanitizeId(raw: string): string {
   return hex;
 }
 
+export async function createDatabase(
+  apiKey: string,
+  parentPageId: string,
+  title: string,
+  columns: Record<string, "rich_text" | "email" | "number" | "select" | "date" | "checkbox" | "url" | "phone_number">
+): Promise<string> {
+  const notion = client(apiKey);
+
+  const properties: Record<string, unknown> = {
+    Name: { title: {} },
+  };
+  for (const [name, type] of Object.entries(columns)) {
+    if (name === "Name") continue;
+    properties[name] = { [type]: {} };
+  }
+
+  const dsClient = (notion as unknown as {
+    dataSources: {
+      create: (args: Record<string, unknown>) => Promise<{ id: string }>;
+    };
+  }).dataSources;
+
+  const db = await dsClient.create({
+    parent: { page_id: sanitizeId(parentPageId) },
+    title: [{ type: "text", text: { content: title } }],
+    properties,
+  });
+
+  return `Created Notion database: "${title}" (id: ${db.id}). Columns: Name (title), ${Object.keys(columns).join(", ")}.`;
+}
+
 export async function createPage(
   apiKey: string,
   databaseId: string,

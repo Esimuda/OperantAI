@@ -51,6 +51,17 @@ async function dispatch(
   context?: RunContext
 ): Promise<string> {
   switch (toolName) {
+    case "notion_create_database": {
+      const apiKey = config.notionApiKey;
+      if (!apiKey) throw new Error("Notion is not connected. Please add NOTION_API_KEY.");
+      return notion.createDatabase(
+        apiKey,
+        input.parent_page_id as string,
+        input.title as string,
+        (input.columns as Record<string, "rich_text" | "email" | "number" | "select" | "date" | "checkbox" | "url" | "phone_number">) ?? {}
+      );
+    }
+
     case "notion_create_page": {
       const apiKey = config.notionApiKey;
       const dbId = (input.database_id as string | undefined) ?? config.notionDatabaseId;

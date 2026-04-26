@@ -4,6 +4,30 @@ import { INTEGRATION_META } from "@/lib/integrations/meta";
 
 export const AGENT_TOOLS: Anthropic.Tool[] = [
   {
+    name: "notion_create_database",
+    description:
+      "Create a new Notion database (table) with defined columns inside a parent page. Use this when the user needs a new table structure — do not assume a database already exists.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        parent_page_id: {
+          type: "string",
+          description: "The Notion page ID where the database will be created.",
+        },
+        title: {
+          type: "string",
+          description: "The name of the new database.",
+        },
+        columns: {
+          type: "object",
+          description:
+            "Column definitions. Keys are column names, values are types: rich_text, email, number, select, date, checkbox, url, phone_number. A 'Name' title column is always added automatically.",
+        },
+      },
+      required: ["parent_page_id", "title", "columns"],
+    },
+  },
+  {
     name: "notion_create_page",
     description:
       "Create a new page or row in a Notion database. Use this to log leads, tasks, records, or any structured data into Notion.",
