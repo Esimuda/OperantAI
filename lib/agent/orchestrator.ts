@@ -9,9 +9,13 @@ import { MemoryManager } from "./memory";
 import { getActiveTools } from "./tools";
 import { runAgent, RunnerOptions } from "./runner";
 import { createExecution, saveExecution } from "@/lib/db/executions";
+import type { WorkflowBlueprint } from "@/lib/export/n8n";
 import type {
   AgentStreamEvent,
   ExecutionStepRecord,
+  GoalRepresentation,
+  OperationalPlan,
+  StepToolMapping,
   WorkflowGraph,
 } from "@/lib/types";
 
@@ -185,8 +189,36 @@ export async function runOrchestrator(options: OrchestratorOptions): Promise<str
     retryCount++;
   }
 
+  // Emit the workflow blueprint so AgentRunPanel saves it to the library
+  const blueprint = buildWorkflowBlueprint(goal, plan, toolMappings);
+  const blueprintId = `blueprint-${Date.now()}`;
+  emit({ type: "tool_call_start", runId, toolCallId: blueprintId, toolName: "build_workflow", input: blueprint as unknown as Record<string, unknown> });
+  emit({ type: "tool_call_complete", runId, toolCallId: blueprintId, output: `Workflow "${blueprint.name}" saved to library.\n__WORKFLOW_JSON__:${JSON.stringify(blueprint)}`, durationMs: 0 });
+
   emit({ type: "agent_stage", runId, stage: "complete", description: "Done." });
   return finalMessage;
+}
+
+function buildWorkflowBlueprint(
+  goal: GoalRepresentation,
+  plan: OperationalPlan,
+  toolMappings: StepToolMapping[]
+): WorkflowBlueprint {
+  return {
+    name: goal.goal.slice(0, 80),
+    trigger: goal.trigger ?? "Manual",
+    steps: plan.steps.map((s) => {
+      const mapping = toolMappings.find((m) => m.stepId === s.id);
+      return {
+        step: s.id,
+        action: s.description,
+        tool: mapping?.tool ?? s.estimatedTool ?? "custom",
+        output: `Result of step ${s.id}`,
+        dependencies: s.dependencies.length > 0 ? s.dependencies : undefined,
+      };
+    }),
+    expected_outcome: goal.successMetrics.join("; ") || goal.goal,
+  };
 }
 
 function buildExecutionMessage(
@@ -213,7 +245,7 @@ ${stepLines}
 
 Rules for this execution:
 - If any step uses notion_create_page, call it directly — do NOT call notion_query_database before it.
-- If any step creates a database, use notion_create_database without a parent_page_id unless one was explicitly provided.
+- If any step creates a Notion database, call notion_search_pages first to get a valid parent_page_id, then call notion_create_database with that ID.
 - Do not call any tool to "verify" or "inspect" before writing — just write.
 
 When done, output a Run Report in the exact format from your instructions: what ran, what succeeded with key outputs, and what failed with the error and a fix suggestion.`;
