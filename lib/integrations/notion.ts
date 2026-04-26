@@ -59,19 +59,26 @@ export async function queryDatabase(
 ): Promise<string> {
   const notion = client(apiKey);
 
-  const queryParams: Parameters<typeof notion.databases.query>[0] = {
-    database_id: sanitizeId(databaseId),
+  const cleanId = sanitizeId(databaseId);
+
+  const body: Record<string, unknown> = {
     page_size: Math.min(pageSize, 25),
   };
 
   if (filterProperty && filterValue) {
-    queryParams.filter = {
+    body.filter = {
       property: filterProperty,
       rich_text: { contains: filterValue },
-    } as Parameters<typeof notion.databases.query>[0]["filter"];
+    };
   }
 
-  const response = await notion.databases.query(queryParams);
+  const response = await notion.request<{
+    results: Array<{ id: string; properties: Record<string, unknown> }>;
+  }>({
+    path: `databases/${cleanId}/query`,
+    method: "post",
+    body,
+  });
 
   if (response.results.length === 0) {
     return "No records found in the database.";

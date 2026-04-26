@@ -50,7 +50,7 @@ function formatMemorySection(memories: MemoryEntry[]): string {
 function formatRecentRuns(runHistory: AgentRun[]): string {
   if (runHistory.length === 0) return "";
   const lines = runHistory.slice(0, 5).map((r, i) => {
-    const tools = [...new Set(r.toolCalls.map((tc) => tc.toolName))];
+    const tools = Array.from(new Set(r.toolCalls.map((tc) => tc.toolName)));
     const toolPart = tools.length > 0 ? ` (used: ${tools.join(", ")})` : "";
     return `  ${i + 1}. "${r.userMessage}" — ${r.status}${toolPart}`;
   });
